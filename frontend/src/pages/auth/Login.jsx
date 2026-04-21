@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import useAuthStore from '../../store/authStore';
+
+const Login = () => {
+  const navigate = useNavigate();
+  const { login, isLoading, error, clearError, user } = useAuthStore();
+  const [loginError, setLoginError] = useState('');
+  
+
+  
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors } 
+  } = useForm();
+  
+  if (user) {
+    if (user.role === 'superadmin') {
+      return <Navigate to="/superadmin/dashboard" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const onSubmit = async (data) => {
+    clearError();
+    setLoginError('');
+    
+    const result = await login(data.email, data.password);
+    
+    if (result.success) {
+      const u = useAuthStore.getState().user;
+      navigate(u?.role === 'superadmin' ? '/superadmin/dashboard' : '/dashboard');
+    } else {
+      setLoginError(result.error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
+            <span className="text-2xl font-bold text-white">SMS</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+          <p className="text-gray-600 mt-2">Sign in to your school account</p>
+        </div>
+
+        {/* Form Card */}
+        <div className="card">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Error Alert */}
+            {(loginError || error) && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <span className="text-sm">{loginError || error}</span>
+              </div>
+            )}
+
+            {/* Email Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  className={`input-field pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                  placeholder="admin@school.com"
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^\S+@\S+\.\S+$/,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="password"
+                  className={`input-field pl-10 ${errors.password ? 'border-red-500' : ''}`}
+                  placeholder="••••••••"
+                  {...register('password', { 
+                    required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters'
+                    }
+                  })}
+                />
+              </div>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          {/* Register Link */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+                Register your school
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
