@@ -5,7 +5,10 @@ import { useSchoolPlanFeatures } from '../hooks/useSchoolPlanFeatures';
 /**
  * Alerts → /notifications; disabled when communication is not on the school's plan.
  */
-export default function NavbarAlertsLink({ className = 'btn-secondary flex items-center gap-2' }) {
+export default function NavbarAlertsLink({
+  className = 'btn-secondary flex items-center gap-2',
+  onNavigate,
+}) {
   const { feature } = useSchoolPlanFeatures();
   const comm = feature('communication');
   if (comm === null) {
@@ -26,7 +29,7 @@ export default function NavbarAlertsLink({ className = 'btn-secondary flex items
     );
   }
   return (
-    <Link to="/notifications" className={className}>
+    <Link to="/notifications" className={className} onClick={() => onNavigate?.()}>
       <Bell className="w-4 h-4" /> Alerts
     </Link>
   );

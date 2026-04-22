@@ -334,21 +334,67 @@ const StudentList = () => {
     <div className="min-h-screen bg-gray-50">
       {/* ── Nav ── */}
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="text-gray-500 hover:text-gray-700 text-sm font-medium">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-300">|</span>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-5 py-4">
+          {/* Mobile: toolbar row, then branding — avoids cramming link + title on one line */}
+          <div className="sm:hidden space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <Link
+                to="/dashboard"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 rounded-md py-1 pr-1 -ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              >
+                ← Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2.5 text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Log out"
+              >
+                <LogOut className="w-5 h-5" aria-hidden />
+              </button>
+            </div>
+            <div className="min-w-0 space-y-1.5 pb-0.5">
+              <h1
+                className="text-lg font-bold text-gray-900 leading-snug break-words line-clamp-2"
+                title={user?.schoolName || ''}
+              >
+                {user?.schoolName}
+              </h1>
               <p className="text-xs text-gray-500">Student Management</p>
             </div>
           </div>
-          <button onClick={logout} className="btn-secondary flex items-center gap-2">
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
+
+          {/* sm+: single horizontal bar */}
+          <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <Link
+                to="/dashboard"
+                className="shrink-0 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
+              >
+                ← Dashboard
+              </Link>
+              <span className="shrink-0 text-gray-300 select-none" aria-hidden>
+                |
+              </span>
+              <div className="min-w-0 flex-1">
+                <h1
+                  className="text-xl font-bold text-gray-900 truncate"
+                  title={user?.schoolName || ''}
+                >
+                  {user?.schoolName}
+                </h1>
+                <p className="text-xs text-gray-500 truncate">Student Management</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="btn-secondary inline-flex shrink-0 items-center gap-2"
+            >
+              <LogOut className="w-4 h-4 shrink-0" aria-hidden />
+              Logout
+            </button>
+          </div>
         </div>
       </nav>
 

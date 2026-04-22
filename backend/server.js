@@ -1,8 +1,8 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-const { applyMongoDnsFromEnv } = require('./src/utils/mongoDns');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
+const { applyMongoDnsFromEnv } = require("./src/utils/mongoDns");
 applyMongoDnsFromEnv();
 
 const app = express();
@@ -10,62 +10,66 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'http://localhost:3000',
+  "http://localhost:3000",
 ].filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection (do not process.exit on Vercel — serverless would terminate the function)
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected successfully'))
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error("❌ MongoDB connection error:", err);
     if (!process.env.VERCEL) {
       process.exit(1);
     }
   });
 
 // Routes
-app.use('/api/auth', require('./src/routes/auth'));
-app.use('/api/students', require('./src/routes/student'));
-app.use('/api/teachers', require('./src/routes/teacher'));
-app.use('/api/attendance', require('./src/routes/attendance'));
-app.use('/api/subscription', require('./src/routes/subscription'));
-app.use('/api/academic', require('./src/routes/academic'));
-app.use('/api/exams', require('./src/routes/exam'));
-app.use('/api/fees', require('./src/routes/fee'));
-app.use('/api/communication', require('./src/routes/communication'));
-app.use('/api/timetable', require('./src/routes/timetable'));
-app.use('/api/reports', require('./src/routes/reports'));
-app.use('/api/parent', require('./src/routes/parent'));
-app.use('/api/leaves', require('./src/routes/leave'));
-app.use('/api/events', require('./src/routes/events'));
-app.use('/api/payroll', require('./src/routes/payroll'));
-app.use('/api/diary', require('./src/routes/diary'));
-app.use('/api/superadmin', require('./src/routes/superAdmin'));
+app.use("/api/auth", require("./src/routes/auth"));
+app.use("/api/students", require("./src/routes/student"));
+app.use("/api/teachers", require("./src/routes/teacher"));
+app.use("/api/attendance", require("./src/routes/attendance"));
+app.use("/api/subscription", require("./src/routes/subscription"));
+app.use("/api/academic", require("./src/routes/academic"));
+app.use("/api/exams", require("./src/routes/exam"));
+app.use("/api/fees", require("./src/routes/fee"));
+app.use("/api/communication", require("./src/routes/communication"));
+app.use("/api/timetable", require("./src/routes/timetable"));
+app.use("/api/reports", require("./src/routes/reports"));
+app.use("/api/parent", require("./src/routes/parent"));
+app.use("/api/leaves", require("./src/routes/leave"));
+app.use("/api/events", require("./src/routes/events"));
+app.use("/api/payroll", require("./src/routes/payroll"));
+app.use("/api/diary", require("./src/routes/diary"));
+app.use("/api/superadmin", require("./src/routes/superAdmin"));
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date() });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
+  console.error("Global error handler:", err);
   res.status(500).json({
     success: false,
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Server error'
+    message:
+      process.env.NODE_ENV === "development" ? err.message : "Server error",
   });
 });
 
@@ -73,7 +77,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: "Route not found",
   });
 });
 

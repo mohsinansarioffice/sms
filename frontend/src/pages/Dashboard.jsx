@@ -17,6 +17,8 @@ import {
   Megaphone,
   Mail,
   NotebookPen,
+  Menu,
+  X,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useStudentStore from "../store/studentStore";
@@ -115,6 +117,7 @@ const Dashboard = () => {
 
   const [dismissPendingPay, setDismissPendingPay] = useState(false);
   const [dismissBillingRem, setDismissBillingRem] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
 
   const feat = usePlanFeatures(usage);
   const staff = user?.role === "admin" || user?.role === "teacher";
@@ -170,6 +173,15 @@ const Dashboard = () => {
     });
   }, [usage, fetchEvents]);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => {
+      if (mq.matches) setNavMenuOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   const studentLimit = usage?.usage?.students?.limit;
   const teacherLimit = usage?.usage?.teachers?.limit;
   const studentPct = usage?.usage?.students?.percentage ?? 0;
@@ -179,49 +191,126 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* ── Nav ── */}
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">
-                {user?.schoolName}
-              </h1>
-              <Link
-                to="/settings/plans"
-                title="View subscription plans"
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                  PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
-                }`}
-              >
-                {planDisplayName}
-              </Link>
-            </div>
-            <p className="text-sm text-gray-600">Welcome back, {user?.name}</p>
-          </div>
-          <div className="flex gap-3 items-center">
-            <NotificationBell />
-            <NavbarAlertsLink />
-            {(user?.role === "admin" || user?.role === "teacher") &&
-              feat("communication") && (
-                <Link
-                  to="/announcements/new"
-                  className="btn-primary flex items-center gap-2"
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h1
+                  className="text-lg sm:text-xl font-bold text-gray-900 min-w-0 truncate"
+                  title={user?.schoolName || ""}
                 >
-                  <Megaphone className="w-4 h-4" /> New announcement
+                  {user?.schoolName}
+                </h1>
+                <Link
+                  to="/settings/plans"
+                  title="View subscription plans"
+                  className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                    PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
+                  }`}
+                >
+                  {planDisplayName}
                 </Link>
-              )}
-            <button
-              onClick={() => navigate("/settings/usage")}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Settings className="w-4 h-4" /> Settings
-            </button>
-            <button
-              onClick={logout}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" /> Logout
-            </button>
+              </div>
+              <p
+                className="text-sm text-gray-600 truncate mt-0.5"
+                title={
+                  user?.name ? `Welcome back, ${user.name}` : undefined
+                }
+              >
+                Welcome back, {user?.name}
+              </p>
+            </div>
+
+            <div className="hidden lg:flex flex-shrink-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
+              <NotificationBell />
+              <NavbarAlertsLink />
+              {(user?.role === "admin" || user?.role === "teacher") &&
+                feat("communication") && (
+                  <Link
+                    to="/announcements/new"
+                    className="btn-primary inline-flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <Megaphone className="w-4 h-4 shrink-0" /> New announcement
+                  </Link>
+                )}
+              <button
+                type="button"
+                onClick={() => navigate("/settings/usage")}
+                className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
+              >
+                <Settings className="w-4 h-4 shrink-0" /> Settings
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
+              >
+                <LogOut className="w-4 h-4 shrink-0" /> Logout
+              </button>
+            </div>
+
+            <div className="flex lg:hidden flex-shrink-0 items-center gap-0.5">
+              <NotificationBell />
+              <button
+                type="button"
+                className="p-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-expanded={navMenuOpen}
+                aria-controls="dashboard-nav-menu"
+                aria-label={navMenuOpen ? "Close menu" : "Open menu"}
+                onClick={() => setNavMenuOpen((o) => !o)}
+              >
+                {navMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
+
+          {navMenuOpen ? (
+            <div
+              id="dashboard-nav-menu"
+              className="lg:hidden mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2"
+            >
+              <NavbarAlertsLink
+                className="btn-secondary flex w-full items-center justify-center gap-2 py-2.5"
+                onNavigate={() => setNavMenuOpen(false)}
+              />
+              {(user?.role === "admin" || user?.role === "teacher") &&
+                feat("communication") && (
+                  <Link
+                    to="/announcements/new"
+                    className="btn-primary flex w-full items-center justify-center gap-2 py-2.5"
+                    onClick={() => setNavMenuOpen(false)}
+                  >
+                    <Megaphone className="w-4 h-4 shrink-0" /> New announcement
+                  </Link>
+                )}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNavMenuOpen(false);
+                    navigate("/settings/usage");
+                  }}
+                  className="btn-secondary flex items-center justify-center gap-2 py-2.5"
+                >
+                  <Settings className="w-4 h-4 shrink-0" /> Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNavMenuOpen(false);
+                    logout();
+                  }}
+                  className="btn-secondary flex items-center justify-center gap-2 py-2.5"
+                >
+                  <LogOut className="w-4 h-4 shrink-0" /> Logout
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </nav>
 
