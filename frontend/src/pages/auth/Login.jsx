@@ -39,8 +39,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
-      <div className="max-w-md w-full">
+    <div className="relative min-h-screen overflow-hidden flex items-center justify-center login-animated-bg px-4">
+      <div className="relative z-10 max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
