@@ -9,6 +9,9 @@ const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 let refreshPromise = null;
 
+/**
+ * Full client sign-out: storage + zustand. Used for 401 / token errors (async import avoids axios ↔ authStore cycle).
+ */
 export async function clearAllAuth() {
   clearSessionTokens();
   localStorage.removeItem('auth-storage');
@@ -21,6 +24,7 @@ export async function clearAllAuth() {
     isAuthenticated: false,
   });
 }
+
 
 export async function refreshSessionTokens() {
   if (refreshPromise) return refreshPromise;

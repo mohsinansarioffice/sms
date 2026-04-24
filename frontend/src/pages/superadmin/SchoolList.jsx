@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Search, Loader2, ChevronLeft, ChevronRight, ArrowLeft, LogOut } from 'lucide-react';
+import { Building2, Search, Loader2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
-import useAuthStore from '../../store/authStore';
 import ToggleSwitch from '../../components/superadmin/ToggleSwitch';
+import LogoutButton from '../../components/common/LogoutButton';
 
 const planBadge = (plan) => {
   const colors = {
@@ -21,7 +21,6 @@ const planBadge = (plan) => {
 
 const SchoolList = () => {
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
   const {
     schools,
     total,
@@ -81,9 +80,7 @@ const SchoolList = () => {
               <Building2 className="w-6 h-6 text-primary-600" /> Schools
             </h1>
           </div>
-          <button type="button" onClick={() => logout()} className="btn-secondary inline-flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
+          <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
         </div>
       </nav>
 

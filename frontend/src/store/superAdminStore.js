@@ -109,6 +109,21 @@ const useSuperAdminStore = create((set, get) => ({
     }
   },
 
+  resetSchoolAdminPassword: async (schoolId, newPassword) => {
+    try {
+      const res = await axios.post(
+        `/superadmin/schools/${schoolId}/admin/reset-password`,
+        newPassword != null && String(newPassword).trim() !== ''
+          ? { newPassword: String(newPassword) }
+          : {}
+      );
+      const d = unwrap(res);
+      return { success: true, userId: d.userId, email: d.email, newPassword: d.newPassword };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
   createSuperAdmin: async (payload) => {
     try {
       await axios.post('/superadmin/admins', payload);

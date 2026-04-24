@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, LogOut } from 'lucide-react';
+import { ArrowLeft, Copy, KeyRound, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
-import useAuthStore from '../../store/authStore';
 import ToggleSwitch from '../../components/superadmin/ToggleSwitch';
+import LogoutButton from '../../components/common/LogoutButton';
 
 const FEATURE_LABELS = {
   attendance: 'Attendance',
@@ -26,12 +26,12 @@ const FEATURE_LABELS = {
 const SchoolDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
   const {
     schoolDetail,
     fetchSchool,
     updateSchoolPlan,
     updateSchoolFeature,
+    resetSchoolAdminPassword,
     isLoading,
     error,
     clearError,
@@ -41,6 +41,8 @@ const SchoolDetail = () => {
   const [paymentDueInput, setPaymentDueInput] = useState('');
   const [savingFeatureKey, setSavingFeatureKey] = useState(null);
   const [savingPlan, setSavingPlan] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [revealPassword, setRevealPassword] = useState(null);
 
   const school = schoolDetail?.school;
 
@@ -66,6 +68,7 @@ const SchoolDetail = () => {
     }
   }, [error, clearError]);
   const stats = schoolDetail?.stats;
+  const ownerAdmin = schoolDetail?.ownerAdmin;
   const planDefaults = schoolDetail?.planDefaults || {};
   const effectiveFeatures = schoolDetail?.effectiveFeatures || {};
 
@@ -87,6 +90,43 @@ const SchoolDetail = () => {
       else toast.error(res.error || 'Failed to update');
     } finally {
       setSavingPlan(false);
+    }
+  };
+
+  const closeRevealModal = () => {
+    setRevealPassword(null);
+  };
+
+  const copyRevealedPassword = async () => {
+    if (!revealPassword?.newPassword) return;
+    try {
+      await navigator.clipboard.writeText(revealPassword.newPassword);
+      toast.success('Password copied to clipboard');
+    } catch {
+      toast.error('Could not copy to clipboard');
+    }
+  };
+
+  const handleResetSchoolAdminPassword = async () => {
+    if (!ownerAdmin) return;
+    if (
+      !window.confirm(
+        'A new password will be set for this school’s admin. It will be shown only once. Continue?'
+      )
+    ) {
+      return;
+    }
+    setResettingPassword(true);
+    try {
+      const res = await resetSchoolAdminPassword(id);
+      if (res.success) {
+        setRevealPassword({ email: res.email, newPassword: res.newPassword });
+        toast.success('New password created');
+      } else {
+        toast.error(res.error || 'Failed to reset password');
+      }
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -130,14 +170,59 @@ const SchoolDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {revealPassword ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reveal-pw-title"
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-gray-200">
+            <div className="flex items-start justify-between gap-3">
+              <h3 id="reveal-pw-title" className="text-lg font-bold text-gray-900">
+                New school admin password
+              </h3>
+              <button
+                type="button"
+                onClick={closeRevealModal}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600">
+              Copy and store this password now. It will not be shown again.
+            </p>
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-0.5">Account</p>
+              <p className="text-sm text-gray-900">{revealPassword.email}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-0.5">New password</p>
+              <p className="text-sm font-mono break-all bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-gray-900">
+                {revealPassword.newPassword}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" onClick={copyRevealedPassword} className="btn-primary inline-flex items-center gap-2">
+                <Copy className="w-4 h-4" />
+                Copy password
+              </button>
+              <button type="button" onClick={closeRevealModal} className="btn-secondary">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
           <button type="button" onClick={() => navigate('/superadmin/schools')} className="btn-secondary flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <button type="button" onClick={() => logout()} className="btn-secondary inline-flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
+          <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
         </div>
       </nav>
 
@@ -177,6 +262,55 @@ const SchoolDetail = () => {
                 {stats?.lastPaymentDate ? new Date(stats.lastPaymentDate).toLocaleDateString() : '—'}
               </p>
             </div>
+          </div>
+        </div>
+
+        <div className="card space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl bg-gray-100 text-gray-700">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-bold text-gray-900">School admin access</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Reset the school administrator login password. The new password is shown only once so you can copy it.
+              </p>
+            </div>
+          </div>
+          {ownerAdmin ? (
+            <div className="text-sm space-y-1 pl-0 sm:pl-12">
+              <p>
+                <span className="text-gray-500">Name:</span>{' '}
+                <span className="font-medium text-gray-900">{ownerAdmin.name || '—'}</span>
+              </p>
+              <p>
+                <span className="text-gray-500">Email:</span>{' '}
+                <span className="font-medium text-gray-900">{ownerAdmin.email}</span>
+              </p>
+              <p>
+                <span className="text-gray-500">Status:</span>{' '}
+                {ownerAdmin.isActive ? (
+                  <span className="text-green-700 font-medium">Active</span>
+                ) : (
+                  <span className="text-red-700 font-medium">Inactive</span>
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              No school admin account is linked to this school. The owner record may be missing; reset is unavailable.
+            </p>
+          )}
+          <div className="pl-0 sm:pl-12">
+            <button
+              type="button"
+              onClick={handleResetSchoolAdminPassword}
+              disabled={!ownerAdmin || resettingPassword}
+              className="btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resettingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Reset admin password
+            </button>
           </div>
         </div>
 

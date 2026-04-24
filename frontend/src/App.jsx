@@ -13,6 +13,7 @@ import AttendanceList from './pages/attendance/AttendanceList';
 import AttendanceReport from './pages/attendance/AttendanceReport';
 import Plans from './pages/settings/Plans';
 import Usage from './pages/settings/Usage';
+import ChangePassword from './pages/settings/ChangePassword';
 import AcademicSettings from './pages/academic/AcademicSettings';
 import ExamList from './pages/exams/ExamList';
 import ExamForm from './pages/exams/ExamForm';
@@ -26,6 +27,7 @@ import StudentFeeDetail from './pages/fees/StudentFeeDetail';
 import PaymentReceipt from './pages/fees/PaymentReceipt';
 import FeeReports from './pages/fees/FeeReports';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminOnlyRoute from './components/common/AdminOnlyRoute';
 import SessionManager from './components/common/SessionManager';
 import AnnouncementList from './pages/communication/AnnouncementList';
 import AnnouncementDetail from './pages/communication/AnnouncementDetail';
@@ -41,6 +43,7 @@ import TeacherTimetable from './pages/timetable/TeacherTimetable';
 import ReportCard from './pages/reports/ReportCard';
 import PromoteStudents from './pages/students/PromoteStudents';
 import ParentDashboard from './pages/parent/ParentDashboard';
+import StudentDashboard from './pages/student/StudentDashboard';
 import LeaveList from './pages/leaves/LeaveList';
 import LeaveForm from './pages/leaves/LeaveForm';
 import EventCalendar from './pages/events/EventCalendar';
@@ -81,7 +84,9 @@ function App() {
           path="/students/new"
           element={
             <ProtectedRoute>
-              <StudentForm />
+              <AdminOnlyRoute>
+                <StudentForm />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -97,7 +102,9 @@ function App() {
           path="/students/:id/edit"
           element={
             <ProtectedRoute>
-              <StudentForm />
+              <AdminOnlyRoute>
+                <StudentForm />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -105,7 +112,9 @@ function App() {
           path="/students/promote"
           element={
             <ProtectedRoute>
-              <PromoteStudents />
+              <AdminOnlyRoute>
+                <PromoteStudents />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -121,7 +130,9 @@ function App() {
           path="/teachers/new"
           element={
             <ProtectedRoute>
-              <TeacherForm />
+              <AdminOnlyRoute>
+                <TeacherForm />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -137,7 +148,9 @@ function App() {
           path="/teachers/:id/edit"
           element={
             <ProtectedRoute>
-              <TeacherForm />
+              <AdminOnlyRoute>
+                <TeacherForm />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -169,7 +182,9 @@ function App() {
           path="/settings/plans"
           element={
             <ProtectedRoute>
-              <Plans />
+              <AdminOnlyRoute>
+                <Plans />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -177,7 +192,19 @@ function App() {
           path="/settings/usage"
           element={
             <ProtectedRoute>
-              <Usage />
+              <AdminOnlyRoute>
+                <Usage />
+              </AdminOnlyRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/password"
+          element={
+            <ProtectedRoute>
+              <AdminOnlyRoute>
+                <ChangePassword />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -185,7 +212,9 @@ function App() {
           path="/settings/academic"
           element={
             <ProtectedRoute>
-              <AcademicSettings />
+              <AdminOnlyRoute>
+                <AcademicSettings />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -249,7 +278,9 @@ function App() {
           path="/fees/settings"
           element={
             <ProtectedRoute>
-              <FeeSettings />
+              <AdminOnlyRoute>
+                <FeeSettings />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -257,7 +288,9 @@ function App() {
           path="/fees/assign"
           element={
             <ProtectedRoute>
-              <AssignFees />
+              <AdminOnlyRoute>
+                <AssignFees />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -265,7 +298,9 @@ function App() {
           path="/fees/students"
           element={
             <ProtectedRoute>
-              <StudentFeeList />
+              <AdminOnlyRoute>
+                <StudentFeeList />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -273,7 +308,9 @@ function App() {
           path="/fees/student/:studentId"
           element={
             <ProtectedRoute>
-              <StudentFeeDetail />
+              <AdminOnlyRoute>
+                <StudentFeeDetail />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -281,7 +318,9 @@ function App() {
           path="/fees/receipt/:paymentId"
           element={
             <ProtectedRoute>
-              <PaymentReceipt />
+              <AdminOnlyRoute>
+                <PaymentReceipt />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -289,7 +328,9 @@ function App() {
           path="/fees/reports"
           element={
             <ProtectedRoute>
-              <FeeReports />
+              <AdminOnlyRoute>
+                <FeeReports />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -353,7 +394,9 @@ function App() {
           path="/timetable/slots"
           element={
             <ProtectedRoute>
-              <TimeSlotSettings />
+              <AdminOnlyRoute>
+                <TimeSlotSettings />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -361,7 +404,9 @@ function App() {
           path="/timetable/editor"
           element={
             <ProtectedRoute>
-              <TimetableEditor />
+              <AdminOnlyRoute>
+                <TimetableEditor />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -398,6 +443,14 @@ function App() {
           }
         />
         <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/leaves"
           element={
             <ProtectedRoute>
@@ -425,7 +478,9 @@ function App() {
           path="/events/new"
           element={
             <ProtectedRoute>
-              <EventForm />
+              <AdminOnlyRoute>
+                <EventForm />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -433,7 +488,9 @@ function App() {
           path="/payroll"
           element={
             <ProtectedRoute>
-              <PayrollList />
+              <AdminOnlyRoute>
+                <PayrollList />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />
@@ -441,7 +498,9 @@ function App() {
           path="/payroll/slip/:id"
           element={
             <ProtectedRoute>
-              <SalarySlip />
+              <AdminOnlyRoute>
+                <SalarySlip />
+              </AdminOnlyRoute>
             </ProtectedRoute>
           }
         />

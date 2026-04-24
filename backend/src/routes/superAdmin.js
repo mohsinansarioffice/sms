@@ -8,6 +8,7 @@ const {
   updateSchoolPlan,
   toggleSchoolFeature,
   toggleSchoolActive,
+  resetSchoolAdminPassword,
   createSuperAdmin
 } = require('../controllers/superAdminController');
 const { protect, authorizeSuperAdmin } = require('../middleware/auth');
@@ -21,6 +22,18 @@ router.get('/payment-alerts', protect, authorizeSuperAdmin, getPaymentAlerts);
 router.get('/schools', protect, authorizeSuperAdmin, getAllSchools);
 
 router.get('/schools/:id', protect, authorizeSuperAdmin, param('id').isMongoId(), getSchoolStats);
+
+router.post(
+  '/schools/:id/admin/reset-password',
+  protect,
+  authorizeSuperAdmin,
+  param('id').isMongoId(),
+  body('newPassword')
+    .optional({ checkFalsy: true })
+    .isLength({ min: 6 })
+    .withMessage('New password must be at least 6 characters when provided'),
+  resetSchoolAdminPassword
+);
 
 router.patch(
   '/schools/:id/plan',

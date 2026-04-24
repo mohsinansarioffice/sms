@@ -13,7 +13,6 @@ import {
   Calendar,
   AlertCircle,
   Loader2,
-  LogOut,
   CalendarCheck,
   FileText,
   CreditCard,
@@ -26,6 +25,8 @@ import useStudentStore from "../../store/studentStore";
 import useAttendanceStore from "../../store/attendanceStore";
 import useFeeStore from "../../store/feeStore";
 import useAuthStore from "../../store/authStore";
+import axios from "../../lib/axios";
+import LogoutButton from "../../components/common/LogoutButton";
 
 // ── Info row helper ────────────────────────────────────────────────────────────
 const InfoRow = ({ label, value }) => (
@@ -52,7 +53,7 @@ const Section = ({ icon: Icon, title, children }) => (
 const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const {
     currentStudent: student,
     isLoading,
@@ -86,15 +87,29 @@ const StudentDetail = () => {
   const [resetPasswordValue, setResetPasswordValue] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isUnlinkingParent, setIsUnlinkingParent] = useState(false);
+  const [showStudentLoginModal, setShowStudentLoginModal] = useState(false);
+  const [showStudentResetModal, setShowStudentResetModal] = useState(false);
+  const [studentLoginForm, setStudentLoginForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
+  const [studentResetPassword, setStudentResetPassword] = useState("");
+  const [isStudentLoginSubmitting, setIsStudentLoginSubmitting] = useState(false);
+  const [isStudentResetting, setIsStudentResetting] = useState(false);
+  const [isStudentUnlinking, setIsStudentUnlinking] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchStudent(id);
       fetchStudentAttendance(id);
-      fetchStudentFees(id);
+      if (user?.role === "admin") {
+        fetchStudentFees(id);
+      }
     }
     return () => clearError();
-  }, [id]);
+  }, [id, user?.role]);
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this student?"))
@@ -335,6 +350,80 @@ const StudentDetail = () => {
     toast.error(result.error || "Failed to unlink parent account");
   };
 
+  const openStudentLoginModal = () => {
+    setStudentLoginForm({
+      name: fullName || "",
+      email: student?.contactInfo?.email || "",
+      phone: student?.contactInfo?.phone || "",
+      password: "",
+    });
+    setShowStudentLoginModal(true);
+  };
+
+  const submitStudentLogin = async (event) => {
+    event.preventDefault();
+    if (!studentLoginForm.email || !/^\S+@\S+\.\S+$/.test(studentLoginForm.email)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    if (!studentLoginForm.password || studentLoginForm.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setIsStudentLoginSubmitting(true);
+    try {
+      await axios.post("/auth/create-student-account", {
+        studentId: id,
+        name: studentLoginForm.name.trim(),
+        email: studentLoginForm.email.trim().toLowerCase(),
+        phone: studentLoginForm.phone.trim(),
+        password: studentLoginForm.password,
+      });
+      toast.success("Student login account created successfully");
+      setShowStudentLoginModal(false);
+      await fetchStudent(id);
+    } catch (err) {
+      toast.error(err.message || "Failed to create student login");
+    } finally {
+      setIsStudentLoginSubmitting(false);
+    }
+  };
+
+  const submitStudentResetPassword = async (event) => {
+    event.preventDefault();
+    if (!studentResetPassword || studentResetPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setIsStudentResetting(true);
+    try {
+      await axios.put(`/auth/students/${id}/password`, {
+        newPassword: studentResetPassword,
+      });
+      toast.success("Student password reset successfully");
+      setShowStudentResetModal(false);
+      setStudentResetPassword("");
+    } catch (err) {
+      toast.error(err.message || "Failed to reset student password");
+    } finally {
+      setIsStudentResetting(false);
+    }
+  };
+
+  const unlinkStudentLogin = async () => {
+    if (!window.confirm("Unlink this student login? The account will be deactivated.")) return;
+    setIsStudentUnlinking(true);
+    try {
+      const response = await axios.delete(`/auth/students/${id}`);
+      toast.success(response?.message || "Student login unlinked successfully");
+      await fetchStudent(id);
+    } catch (err) {
+      toast.error(err.message || "Failed to unlink student login");
+    } finally {
+      setIsStudentUnlinking(false);
+    }
+  };
+
   // ── Loading ──
   if (isLoading && !student) {
     return (
@@ -390,13 +479,7 @@ const StudentDetail = () => {
               <p className="text-xs text-gray-500">Student Profile</p>
             </div>
           </div>
-          <button
-            onClick={logout}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
+          <LogoutButton className="btn-secondary flex items-center gap-2" />
         </div>
       </nav>
 
@@ -514,6 +597,59 @@ const StudentDetail = () => {
             </div>
           )}
         </div>
+
+        {user?.role === "admin" && (
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4 pb-3 border-b">
+              <User className="w-5 h-5 text-primary-600" />
+              Student Login Access
+            </h3>
+            {!student.userId ? (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-gray-600">
+                  This student does not have a login account yet.
+                </p>
+                <button
+                  type="button"
+                  onClick={openStudentLoginModal}
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Create Student Login
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 w-fit">
+                  Student Login Linked
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentResetModal(true)}
+                    className="btn-secondary inline-flex items-center gap-2 text-sm"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    Reset Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={unlinkStudentLogin}
+                    disabled={isStudentUnlinking}
+                    className="px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 inline-flex items-center gap-2 text-sm disabled:opacity-60"
+                  >
+                    {isStudentUnlinking ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlink className="w-4 h-4" />
+                    )}
+                    Unlink Login
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Grid of info sections ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -693,59 +829,61 @@ const StudentDetail = () => {
           </p>
         </div>
 
-        {/* ── Fee Summary Panel (NEW) ── */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-6 pb-3 border-b">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-green-600" />
-              Financial Status
-            </h3>
-            <Link
-              to={`/fees/student/${id}`}
-              className="text-sm font-medium text-green-600 hover:text-green-800"
-            >
-              Billing Details →
-            </Link>
-          </div>
-
-          {currentStudentFee?.summary ? (
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex-1 space-y-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Outstanding Balance
-                </p>
-                <p
-                  className={`text-4xl font-bold ${currentStudentFee.summary.totalOutstanding > 0 ? "text-red-600" : "text-green-600"}`}
-                >
-                  Rs.{" "}
-                  {currentStudentFee.summary.totalOutstanding.toLocaleString()}
-                </p>
-              </div>
-              <div className="flex gap-12 border-l border-gray-100 pl-8">
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
-                    Total Fee
-                  </p>
-                  <p className="text-xl font-bold text-gray-900 tracking-tight">
-                    Rs. {currentStudentFee.summary.totalFees.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium uppercase tracking-widest mb-1 text-green-600">
-                    Paid Amount
-                  </p>
-                  <p className="text-xl font-bold text-green-700 tracking-tight">
-                    Rs. {currentStudentFee.summary.totalPaid.toLocaleString()}
-                  </p>
-                </div>
-              </div>
+        {/* ── Fee Summary — school administrators only ── */}
+        {user?.role === "admin" && (
+          <div className="card">
+            <div className="flex justify-between items-center mb-6 pb-3 border-b">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-green-600" />
+                Financial Status
+              </h3>
+              <Link
+                to={`/fees/student/${id}`}
+                className="text-sm font-medium text-green-600 hover:text-green-800"
+              >
+                Billing Details →
+              </Link>
             </div>
-          ) : (
-            <p className="text-gray-400 text-sm italic font-medium">
-              No financial records found for the current session.
-            </p>
-          )}
-        </div>
+
+            {currentStudentFee?.summary ? (
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1 space-y-1">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Outstanding Balance
+                  </p>
+                  <p
+                    className={`text-4xl font-bold ${currentStudentFee.summary.totalOutstanding > 0 ? "text-red-600" : "text-green-600"}`}
+                  >
+                    Rs.{" "}
+                    {currentStudentFee.summary.totalOutstanding.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex gap-12 border-l border-gray-100 pl-8">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                      Total Fee
+                    </p>
+                    <p className="text-xl font-bold text-gray-900 tracking-tight">
+                      Rs. {currentStudentFee.summary.totalFees.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-widest mb-1 text-green-600">
+                      Paid Amount
+                    </p>
+                    <p className="text-xl font-bold text-green-700 tracking-tight">
+                      Rs. {currentStudentFee.summary.totalPaid.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-400 text-sm italic font-medium">
+                No financial records found for the current session.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── Timestamps ── */}
         <div className="card">
@@ -960,6 +1098,143 @@ const StudentDetail = () => {
                 <button
                   type="button"
                   onClick={closeResetPasswordModal}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showStudentLoginModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-xl border border-gray-200">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Create Student Login
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Create a login account linked to this student profile.
+              </p>
+            </div>
+            <form onSubmit={submitStudentLogin} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={studentLoginForm.name}
+                  onChange={(e) =>
+                    setStudentLoginForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  className="input-field"
+                  value={studentLoginForm.email}
+                  onChange={(e) =>
+                    setStudentLoginForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Phone
+                </label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={studentLoginForm.phone}
+                  onChange={(e) =>
+                    setStudentLoginForm((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={studentLoginForm.password}
+                  onChange={(e) =>
+                    setStudentLoginForm((prev) => ({ ...prev, password: e.target.value }))
+                  }
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isStudentLoginSubmitting}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  {isStudentLoginSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  Create Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStudentLoginModal(false)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showStudentResetModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-gray-200">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Reset Student Password
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Set a new password for this student account.
+              </p>
+            </div>
+            <form onSubmit={submitStudentResetPassword} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  New Password *
+                </label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={studentResetPassword}
+                  onChange={(e) => setStudentResetPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex gap-3">
+                <button
+                  type="submit"
+                  disabled={isStudentResetting}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  {isStudentResetting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  Reset Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStudentResetModal(false)}
                   className="btn-secondary"
                 >
                   Cancel

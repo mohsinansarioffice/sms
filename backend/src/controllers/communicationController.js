@@ -5,6 +5,10 @@ const Message = require('../models/Message');
 const Student = require('../models/Student');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+const {
+  isMessageBetweenUsersAllowed,
+  getMessageRecipientUserIds
+} = require('../lib/messageRecipientPolicy');
 
 const uid = (u) => (u?.id || u?._id)?.toString();
 
@@ -678,10 +682,10 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid recipient' });
     }
 
-    if (req.user.role === 'parent' && recipient.role !== 'admin') {
+    if (!(await isMessageBetweenUsersAllowed(req.user.schoolId, req.user, recipient))) {
       return res.status(403).json({
         success: false,
-        message: 'Parents can only send messages to school administrators'
+        message: 'You are not allowed to message this user. Choose a relevant contact (e.g. your teachers, or parents of your students).'
       });
     }
 
@@ -770,16 +774,15 @@ exports.getUnreadMessagesCount = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
   try {
-    const filter = {
-      schoolId: req.user.schoolId,
-      _id: { $ne: req.user._id || req.user.id },
-      isActive: true
-    };
-    if (req.user.role === 'parent') {
-      filter.role = 'admin';
+    const allowIds = await getMessageRecipientUserIds(req.user.schoolId, req.user);
+    if (!allowIds.length) {
+      return res.status(200).json({ success: true, data: { users: [] } });
     }
-
-    const users = await User.find(filter)
+    const users = await User.find({
+      _id: { $in: allowIds },
+      schoolId: req.user.schoolId,
+      isActive: true
+    })
       .select('profile.name role email')
       .sort({ 'profile.name': 1 })
       .lean();

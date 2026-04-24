@@ -10,6 +10,7 @@ const ComposeMessage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isParent = user?.role === 'parent';
+  const isStudent = user?.role === 'student';
   const messagesHome = '/messages';
   const [searchParams] = useSearchParams();
   const presetTo = searchParams.get('to');
@@ -91,14 +92,22 @@ const ComposeMessage = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="card space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isParent ? 'To (school administrator)' : 'To'}
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+            {isParent && (
+              <p className="text-xs text-gray-500 mb-1.5">
+                School administrators and teachers of your children (from the class timetable) appear here.
+              </p>
+            )}
+            {isStudent && (
+              <p className="text-xs text-gray-500 mb-1.5">
+                You can message staff (admin) and, when set up, your own parent and class teachers.
+              </p>
+            )}
             <select
               className="input-field"
               {...register('recipientId', { required: 'Choose a recipient' })}
             >
-              <option value="">{isParent ? 'Select administrator…' : 'Select user…'}</option>
+              <option value="">Select recipient…</option>
               {users.map((u) => (
                 <option key={u._id} value={u._id}>
                   {u.profile?.name || u.email}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, GraduationCap, AlertCircle, CheckCircle, ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { Users, GraduationCap, AlertCircle, CheckCircle, ArrowLeft, ExternalLink, Loader2, KeyRound } from 'lucide-react';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import useAuthStore from '../../store/authStore';
 
@@ -215,6 +215,26 @@ const Usage = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-gray-100 text-gray-700">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Account security</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Change the password for your administrator login.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/settings/password"
+                className="btn-secondary whitespace-nowrap inline-flex items-center justify-center"
+              >
+                Change password
+              </Link>
             </div>
           </>
         )}

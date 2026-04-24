@@ -8,15 +8,13 @@ import {
   PieChart,
   Loader2,
   ArrowRight,
-  LogOut,
   AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
-import useAuthStore from '../../store/authStore';
+import LogoutButton from '../../components/common/LogoutButton';
 
 const SuperAdminDashboard = () => {
-  const { logout } = useAuthStore();
   const { overview, fetchOverview, fetchPaymentAlerts, paymentAlerts, isLoading, error, clearError } =
     useSuperAdminStore();
   const [dismissPaymentPanel, setDismissPaymentPanel] = useState(false);
@@ -59,9 +57,7 @@ const SuperAdminDashboard = () => {
             <Link to="/superadmin/schools" className="btn-primary inline-flex items-center gap-2">
               Manage schools <ArrowRight className="w-4 h-4" />
             </Link>
-            <button type="button" onClick={() => logout()} className="btn-secondary inline-flex items-center gap-2">
-              <LogOut className="w-4 h-4" /> Logout
-            </button>
+            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
           </div>
         </div>
       </nav>

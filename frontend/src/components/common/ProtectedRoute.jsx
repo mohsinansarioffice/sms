@@ -22,7 +22,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (user?.role !== 'superadmin' && location.pathname.startsWith('/superadmin')) {
-    const fallback = user?.role === 'parent' ? '/parent/dashboard' : '/dashboard';
+    const fallback = user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
     return <Navigate to={fallback} replace />;
   }
 
@@ -30,6 +34,11 @@ const ProtectedRoute = ({ children }) => {
   const parentAllowedPaths = ['/parent', '/diary', '/messages', '/notifications'];
   if (user?.role === 'parent' && !parentAllowedPaths.some((p) => location.pathname.startsWith(p))) {
     return <Navigate to="/parent/dashboard" replace />;
+  }
+
+  const studentAllowedPaths = ['/student', '/diary', '/messages', '/notifications', '/announcements', '/timetable'];
+  if (user?.role === 'student' && !studentAllowedPaths.some((p) => location.pathname.startsWith(p))) {
+    return <Navigate to="/student/dashboard" replace />;
   }
 
   return children;

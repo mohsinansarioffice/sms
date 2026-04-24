@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Filter, Trash2, Edit, Eye,
   ChevronLeft, ChevronRight, Users, Loader2,
-  AlertCircle, X, LogOut, Upload, FileDown, Crown,
+  AlertCircle, X, Upload, FileDown, Crown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useStudentStore from '../../store/studentStore';
@@ -11,6 +11,7 @@ import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import DataTable from '../../components/common/DataTable';
+import LogoutButton from '../../components/common/LogoutButton';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const STUDENT_IMPORT_SAMPLE_CSV = `firstName,lastName,guardianName,guardianPhone,className,sectionName,gender,dateOfBirth,phone,email
@@ -155,7 +156,7 @@ const ImportStudentsModal = ({ open, onClose, onSuccess }) => {
 // ── Main Component ─────────────────────────────────────────────────────────────
 const StudentList = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { usage, fetchUsage } = useSubscriptionStore();
   const {
     students, total, currentPage, totalPages,
@@ -344,14 +345,10 @@ const StudentList = () => {
               >
                 ← Dashboard
               </Link>
-              <button
-                type="button"
-                onClick={logout}
+              <LogoutButton
+                iconOnly
                 className="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2.5 text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                aria-label="Log out"
-              >
-                <LogOut className="w-5 h-5" aria-hidden />
-              </button>
+              />
             </div>
             <div className="min-w-0 space-y-1.5 pb-0.5">
               <h1
@@ -386,14 +383,7 @@ const StudentList = () => {
                 <p className="text-xs text-gray-500 truncate">Student Management</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={logout}
-              className="btn-secondary inline-flex shrink-0 items-center gap-2"
-            >
-              <LogOut className="w-4 h-4 shrink-0" aria-hidden />
-              Logout
-            </button>
+            <LogoutButton className="btn-secondary inline-flex shrink-0 items-center gap-2" />
           </div>
         </div>
       </nav>
@@ -528,7 +518,9 @@ const StudentList = () => {
                 <p className="text-gray-400 text-sm mt-1">
                   {filters.search || filters.class || filters.section
                     ? 'Try adjusting your filters'
-                    : 'Add your first student to get started'}
+                    : user?.role === 'admin'
+                      ? 'Add your first student to get started'
+                      : 'No students in the register yet, or none match your filters.'}
                 </p>
                 {user?.role === 'admin' && !filters.search && !filters.class && (
                   <Link to="/students/new" className="btn-primary inline-flex items-center gap-2 mt-4">

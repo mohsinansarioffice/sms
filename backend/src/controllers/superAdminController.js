@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const School = require('../models/School');
 const Student = require('../models/Student');
@@ -23,6 +24,56 @@ function mapToObject(m) {
   if (m instanceof Map) return Object.fromEntries(m);
   if (typeof m === 'object' && m !== null) return { ...m };
   return {};
+}
+
+function adminUserToPublicSummary(u) {
+  if (!u) return null;
+  return {
+    id: u._id,
+    email: u.email,
+    name: (u.profile && u.profile.name) || '',
+    isActive: !!u.isActive,
+  };
+}
+
+/** Owner admin if valid; else first school admin (by createdAt). */
+async function getOwnerAdminSummary(school) {
+  const schoolId = school._id;
+  if (school.owner) {
+    const byOwner = await User.findOne({
+      _id: school.owner,
+      schoolId,
+      role: 'admin',
+    })
+      .select('email profile.name isActive')
+      .lean();
+    if (byOwner) return adminUserToPublicSummary(byOwner);
+  }
+  const fallback = await User.findOne({ schoolId, role: 'admin' })
+    .sort({ createdAt: 1 })
+    .select('email profile.name isActive')
+    .lean();
+  return adminUserToPublicSummary(fallback);
+}
+
+async function resolveSchoolAdminUser(schoolId) {
+  const school = await School.findById(schoolId);
+  if (!school) return { school: null, user: null, notFound: 'school' };
+  if (school.owner) {
+    const byOwner = await User.findOne({
+      _id: school.owner,
+      schoolId,
+      role: 'admin',
+    });
+    if (byOwner) return { school, user: byOwner, notFound: null };
+  }
+  const fallback = await User.findOne({ schoolId, role: 'admin' }).sort({ createdAt: 1 });
+  if (fallback) return { school, user: fallback, notFound: null };
+  return { school, user: null, notFound: 'user' };
+}
+
+function generateAdminTempPassword() {
+  return crypto.randomBytes(12).toString('base64url');
 }
 
 // @route GET /api/superadmin/overview
@@ -136,6 +187,8 @@ exports.getSchoolStats = async (req, res) => {
         Object.prototype.hasOwnProperty.call(overrides, key) ? overrides[key] : def;
     });
 
+    const ownerAdmin = await getOwnerAdminSummary(school);
+
     res.status(200).json({
       success: true,
       data: {
@@ -150,7 +203,8 @@ exports.getSchoolStats = async (req, res) => {
           lastPaymentDate: lastPayment?.paymentDate || null
         },
         planDefaults: plan?.features || {},
-        effectiveFeatures
+        effectiveFeatures,
+        ownerAdmin
       }
     });
   } catch (error) {
@@ -355,6 +409,57 @@ exports.toggleSchoolActive = async (req, res) => {
   } catch (error) {
     console.error('toggleSchoolActive:', error);
     res.status(500).json({ success: false, message: 'Error updating school status' });
+  }
+};
+
+// @route POST /api/superadmin/schools/:id/admin/reset-password
+exports.resetSchoolAdminPassword = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid school id' });
+    }
+
+    const { newPassword: rawNew } = req.body;
+    const newPassword =
+      rawNew != null && String(rawNew).trim() !== ''
+        ? String(rawNew)
+        : generateAdminTempPassword();
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters',
+      });
+    }
+
+    const { user, notFound } = await resolveSchoolAdminUser(id);
+    if (notFound === 'school' || !user) {
+      return res.status(404).json({
+        success: false,
+        message: notFound === 'school' ? 'School not found' : 'No school admin account found for this school',
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: user._id,
+        email: user.email,
+        newPassword,
+      },
+    });
+  } catch (error) {
+    console.error('resetSchoolAdminPassword:', error);
+    res.status(500).json({ success: false, message: 'Error resetting school admin password' });
   }
 };
 

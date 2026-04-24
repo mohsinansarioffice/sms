@@ -3,11 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   User, Phone, Briefcase, DollarSign,
-  ArrowLeft, Loader2, AlertCircle, Save, LogOut, X
+  ArrowLeft, Loader2, AlertCircle, Save, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useTeacherStore from '../../store/teacherStore';
 import useAuthStore from '../../store/authStore';
+import LogoutButton from '../../components/common/LogoutButton';
 
 // ── Tab definitions ────────────────────────────────────────────────────────────
 const TABS = [
@@ -78,7 +79,7 @@ const TeacherForm = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { createTeacher, updateTeacher, fetchTeacher, currentTeacher, isLoading, clearError } = useTeacherStore();
 
   const [activeTab, setActiveTab] = useState('personal');
@@ -196,9 +197,7 @@ const TeacherForm = () => {
               <p className="text-xs text-gray-500">{isEditing ? 'Edit Teacher' : 'Add New Teacher'}</p>
             </div>
           </div>
-          <button onClick={logout} className="btn-secondary flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
+          <LogoutButton className="btn-secondary flex items-center gap-2" />
         </div>
       </nav>
 

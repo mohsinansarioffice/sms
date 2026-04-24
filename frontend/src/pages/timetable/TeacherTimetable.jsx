@@ -22,6 +22,7 @@ const teacherName = (teacher) =>
 const TeacherTimetable = () => {
   const { teacherId: routeTeacherId } = useParams();
   const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
   const { academicYears, fetchAcademicYears } = useAcademicStore();
   const { timeSlots, teacherTimetable, isFetching, fetchTimeSlots, fetchTeacherTimetable } = useTimetableStore();
 
@@ -147,9 +148,18 @@ const TeacherTimetable = () => {
           ) : !timeSlots.length ? (
             <div className="py-10 text-center">
               <p className="text-gray-600 mb-3">No time slots configured yet.</p>
-              <Link to="/timetable/slots" className="btn-primary inline-flex items-center gap-2 print:hidden">
-                Create Time Slots
-              </Link>
+              {isAdmin ? (
+                <Link
+                  to="/timetable/slots"
+                  className="btn-primary inline-flex items-center gap-2 print:hidden"
+                >
+                  Create Time Slots
+                </Link>
+              ) : (
+                <p className="text-sm text-gray-500 print:hidden">
+                  Ask a school administrator to configure time slots.
+                </p>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -1,8 +1,12 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import axios from '../lib/axios';
-import { getAccessToken, setSessionTokens } from '../lib/sessionTokens';
-import { clearAllAuth, logoutOnServer } from '../lib/authRefresh';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import axios from "../lib/axios";
+import {
+  getAccessToken,
+  setSessionTokens,
+  clearSessionTokens,
+} from "../lib/sessionTokens";
+import { clearAllAuth, logoutOnServer } from "../lib/authRefresh";
 
 const useAuthStore = create(
   persist(
@@ -12,12 +16,14 @@ const useAuthStore = create(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      /** True while the user has clicked Logout until local session is cleared (button shows spinner) */
+      isLoggingOut: false,
       error: null,
 
       register: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post('/auth/register', data);
+          const response = await axios.post("/auth/register", data);
           const session = response.data;
           const { accessToken, refreshToken, user } = session;
 
@@ -43,7 +49,7 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post('/auth/login', { email, password });
+          const response = await axios.post("/auth/login", { email, password });
           const session = response.data;
           const { accessToken, refreshToken, user } = session;
 
@@ -66,9 +72,22 @@ const useAuthStore = create(
         }
       },
 
-      logout: async () => {
-        await logoutOnServer();
-        await clearAllAuth();
+      logout: () => {
+        set({ isLoggingOut: true });
+        // Yield one frame so the button can paint disabled + spinner, then clear immediately (no await server).
+        setTimeout(() => {
+          clearSessionTokens();
+          localStorage.removeItem("auth-storage");
+          localStorage.removeItem("user");
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoggingOut: false,
+          });
+          void logoutOnServer();
+        }, 0);
       },
 
       fetchUser: async () => {
@@ -77,7 +96,7 @@ const useAuthStore = create(
 
         set({ isLoading: true });
         try {
-          const response = await axios.get('/auth/me');
+          const response = await axios.get("/auth/me");
           set({
             user: response.data.user,
             isAuthenticated: true,
@@ -95,7 +114,7 @@ const useAuthStore = create(
       clearError: () => set({ error: null }),
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
@@ -109,8 +128,8 @@ const useAuthStore = create(
           setSessionTokens(access, state.refreshToken ?? undefined);
         }
       },
-    }
-  )
+    },
+  ),
 );
 
 export default useAuthStore;

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError, user } = useAuthStore();
   const [loginError, setLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
 
   
@@ -21,6 +22,9 @@ const Login = () => {
     if (user.role === 'superadmin') {
       return <Navigate to="/superadmin/dashboard" replace />;
     }
+    if (user.role === 'student') {
+      return <Navigate to="/student/dashboard" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -32,7 +36,12 @@ const Login = () => {
     
     if (result.success) {
       const u = useAuthStore.getState().user;
-      navigate(u?.role === 'superadmin' ? '/superadmin/dashboard' : '/dashboard');
+      const destination = u?.role === 'superadmin'
+        ? '/superadmin/dashboard'
+        : u?.role === 'student'
+          ? '/student/dashboard'
+          : '/dashboard';
+      navigate(destination);
     } else {
       setLoginError(result.error);
     }
@@ -94,8 +103,8 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="password"
-                  className={`input-field pl-10 ${errors.password ? 'border-red-500' : ''}`}
+                  type={showPassword ? 'text' : 'password'}
+                  className={`input-field pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
                   placeholder="••••••••"
                   {...register('password', { 
                     required: 'Password is required',
@@ -105,6 +114,19 @@ const Login = () => {
                     }
                   })}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>

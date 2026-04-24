@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import {
   Plus, Search, Filter, Trash2, Edit, Eye,
   ChevronLeft, ChevronRight, GraduationCap, Loader2,
-  AlertCircle, X, LogOut, Briefcase
+  AlertCircle, X, Briefcase
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useTeacherStore from '../../store/teacherStore';
 import useAuthStore from '../../store/authStore';
 import DataTable from '../../components/common/DataTable';
+import LogoutButton from '../../components/common/LogoutButton';
 import { createColumnHelper } from '@tanstack/react-table';
 
 // ── Delete confirmation dialog ─────────────────────────────────────────────────
@@ -49,7 +50,7 @@ const DeleteDialog = ({ teacher, onConfirm, onCancel, isLoading }) => (
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const TeacherList = () => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const {
     teachers, total, currentPage, totalPages,
     isLoading, error, filters,
@@ -211,9 +212,7 @@ const TeacherList = () => {
               <p className="text-xs text-gray-500">Teacher Management</p>
             </div>
           </div>
-          <button onClick={logout} className="btn-secondary flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
+          <LogoutButton className="btn-secondary flex items-center gap-2" />
         </div>
       </nav>
 

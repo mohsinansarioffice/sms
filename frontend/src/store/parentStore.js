@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import axios from '../lib/axios';
+import { create } from "zustand";
+import axios from "../lib/axios";
 
-const SELECTED_STUDENT_KEY = 'parentPortal.selectedStudentId';
+const SELECTED_STUDENT_KEY = "parentPortal.selectedStudentId";
 
 const useParentStore = create((set, get) => ({
   children: [],
@@ -24,7 +24,7 @@ const useParentStore = create((set, get) => ({
   fetchChildren: async () => {
     set({ error: null });
     try {
-      const response = await axios.get('/parent/children');
+      const response = await axios.get("/parent/children");
       const students = response?.data?.students || response?.students || [];
       set({ children: students });
       return students;
@@ -37,7 +37,7 @@ const useParentStore = create((set, get) => ({
   fetchDashboard: async (studentId) => {
     set({ isLoading: true, error: null });
     try {
-      const q = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const q = studentId ? `?studentId=${encodeURIComponent(studentId)}` : "";
       const response = await axios.get(`/parent/dashboard${q}`);
       set({
         dashboard: response?.data || null,
@@ -56,7 +56,7 @@ const useParentStore = create((set, get) => ({
   initParentPortal: async () => {
     set({ isLoading: true, error: null, dashboard: null });
     try {
-      const response = await axios.get('/parent/children');
+      const response = await axios.get("/parent/children");
       const students = response?.data?.students || response?.students || [];
       set({ children: students });
 
@@ -74,7 +74,10 @@ const useParentStore = create((set, get) => ({
       }
       if (students.length === 1) {
         studentId = students[0]._id;
-      } else if (stored && students.some((s) => String(s._id) === String(stored))) {
+      } else if (
+        stored &&
+        students.some((s) => String(s._id) === String(stored))
+      ) {
         studentId = stored;
       } else {
         studentId = students[0]._id;

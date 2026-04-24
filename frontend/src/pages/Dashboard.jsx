@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  LogOut,
   Users,
   GraduationCap,
   CalendarCheck,
@@ -19,6 +18,11 @@ import {
   NotebookPen,
   Menu,
   X,
+  Circle,
+  CheckCircle2,
+  ListChecks,
+  Loader2,
+  KeyRound,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useStudentStore from "../store/studentStore";
@@ -26,8 +30,11 @@ import useTeacherStore from "../store/teacherStore";
 import useSubscriptionStore from "../store/subscriptionStore";
 import useCommunicationStore from "../store/communicationStore";
 import useEventStore from "../store/eventStore";
+import useAcademicStore from "../store/academicStore";
+import useFeeStore from "../store/feeStore";
 import NotificationBell from "../components/NotificationBell";
 import NavbarAlertsLink from "../components/NavbarAlertsLink";
+import LogoutButton from "../components/common/LogoutButton";
 import {
   shouldShowBillingReminder,
   daysUntilDueDate,
@@ -46,6 +53,7 @@ const PLAN_BADGE_CLASS = {
   basic: "bg-primary-100 text-primary-700 ring-primary-200",
   premium: "bg-yellow-100 text-yellow-700 ring-yellow-300",
 };
+const ONBOARDING_DISMISS_KEY = "sms_onboarding_dismissed";
 
 function GatedLink({
   ok,
@@ -99,11 +107,137 @@ function GatedButton({
   );
 }
 
+function GettingStartedChecklist({ steps, onDismiss, onClose, forceShow }) {
+  const visibleSteps = steps.filter((s) => !s.hidden);
+  const activeSteps = visibleSteps.filter((s) => !s.disabled);
+  const done = activeSteps.filter((s) => s.complete).length;
+  const total = activeSteps.length;
+  const nextStep = activeSteps.find((s) => !s.complete);
+  const allComplete = total > 0 && done === total;
+
+  if (!visibleSteps.length || total === 0) return null;
+  if (allComplete && !forceShow) return null;
+
+  const progressPct = Math.round((done / total) * 100);
+
+  return (
+    <section className="rounded-xl border border-primary-200 bg-primary-50/40 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">
+            Getting Started
+          </h2>
+          <p className="text-sm text-gray-700 mt-0.5">
+            {allComplete
+              ? "Everything below is configured. You can revisit this anytime from Setup guide."
+              : "Complete these basic setup steps for your school."}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-end shrink-0">
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
+              Close
+            </button>
+          ) : null}
+          {!allComplete ? (
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Don&apos;t remind me
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-3 h-1.5 bg-white/80 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary-500 transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      <ul className="mt-4 space-y-2.5">
+        {visibleSteps.map((step, idx) => (
+          <li
+            key={step.id}
+            className={`rounded-lg px-3 py-2 border ${
+              step.disabled
+                ? "border-gray-200 bg-gray-50/60"
+                : step.complete
+                  ? "border-green-200 bg-green-50/70"
+                  : "border-primary-200 bg-white/80"
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              {step.complete ? (
+                <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+              ) : (
+                <Circle
+                  className={`w-4 h-4 mt-0.5 shrink-0 ${
+                    step.disabled ? "text-gray-400" : "text-primary-500"
+                  }`}
+                />
+              )}
+              <div className="min-w-0">
+                <p
+                  className={`text-sm ${
+                    step.disabled
+                      ? "text-gray-500"
+                      : step.complete
+                        ? "text-gray-700"
+                        : "text-gray-900 font-semibold"
+                  }`}
+                >
+                  {idx + 1}. {step.label}
+                </p>
+                {step.disabled ? (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Not included on your current plan.
+                  </p>
+                ) : !step.complete ? (
+                  <Link
+                    to={step.href}
+                    className="text-xs text-primary-700 font-medium underline mt-0.5 inline-block"
+                  >
+                    Open this setup
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+        <p className="text-gray-700">
+          {allComplete
+            ? `All ${total} setup steps complete`
+            : `Step ${done} of ${total} complete`}
+        </p>
+        {nextStep ? (
+          <Link to={nextStep.href} className="text-primary-700 font-semibold">
+            Go to next step →
+          </Link>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { total: studentTotal, fetchStudents } = useStudentStore();
   const { total: teacherTotal, fetchTeachers } = useTeacherStore();
+  const { academicYears, classes, fetchAcademicYears, fetchClasses } =
+    useAcademicStore();
+  const { categories, fetchCategories } = useFeeStore();
   const { usage, fetchUsage } = useSubscriptionStore();
   const {
     announcements: recentAnnouncements,
@@ -118,9 +252,17 @@ const Dashboard = () => {
   const [dismissPendingPay, setDismissPendingPay] = useState(false);
   const [dismissBillingRem, setDismissBillingRem] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const [dismissOnboarding, setDismissOnboarding] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(ONBOARDING_DISMISS_KEY) === "1";
+  });
+  /** Avoid flashing the checklist while stores are still empty from initial load. */
+  const [onboardingDataReady, setOnboardingDataReady] = useState(false);
+  /** Admin clicked "Setup guide" to review progress (including when all steps are done). */
+  const [setupGuideOpen, setSetupGuideOpen] = useState(false);
 
   const feat = usePlanFeatures(usage);
-  const staff = user?.role === "admin" || user?.role === "teacher";
+  const isAdmin = user?.role === "admin";
   const planId = usage?.plan?.id;
   const planBadgeId = String(
     planId || user?.subscriptionPlan || "free",
@@ -132,24 +274,51 @@ const Dashboard = () => {
   const daysLeft =
     paymentDueDate != null ? daysUntilDueDate(paymentDueDate) : null;
   const showPendingBanner =
-    staff &&
+    isAdmin &&
     planId &&
     planId !== "free" &&
     pendingPayment &&
     !dismissPendingPay;
   const showBillingBanner =
-    staff &&
+    isAdmin &&
     planId &&
     planId !== "free" &&
     paymentDueDate &&
     shouldShowBillingReminder(paymentDueDate) &&
     !dismissBillingRem;
 
+  /** School plan from API (authoritative), not JWT `user.subscriptionPlan` (can be stale after superadmin changes). */
+  const effectivePlanId = String(usage?.plan?.id || "").toLowerCase();
+  const showFreeUpgradeBanner =
+    isAdmin && usage != null && effectivePlanId === "free";
+
   useEffect(() => {
-    fetchStudents(1);
-    fetchTeachers(1);
-    fetchUsage();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setOnboardingDataReady(false);
+      const admin = user?.role === "admin";
+      try {
+        await Promise.all([
+          fetchStudents(1),
+          fetchUsage(),
+          ...(admin
+            ? [
+                fetchTeachers(1),
+                fetchAcademicYears(),
+                fetchClasses(),
+                fetchCategories(),
+              ]
+            : []),
+        ]);
+      } finally {
+        if (!cancelled) setOnboardingDataReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- zustand actions; re-fetch when role resolves
+  }, [user?.role]);
 
   useEffect(() => {
     if (!usage) return;
@@ -186,6 +355,50 @@ const Dashboard = () => {
   const teacherLimit = usage?.usage?.teachers?.limit;
   const studentPct = usage?.usage?.students?.percentage ?? 0;
   const teacherPct = usage?.usage?.teachers?.percentage ?? 0;
+  const feesKnownUnavailable = usage?.features?.fees === false;
+  const feesEnabled = usage?.features?.fees === true;
+  const onboardingSteps = [
+    {
+      id: "academic",
+      label: "Set academic years and classes",
+      complete: academicYears.length > 0 && classes.length > 0,
+      href: "/settings/academic",
+    },
+    {
+      id: "teachers",
+      label: "Add your first teacher",
+      complete: teacherTotal > 0,
+      href: "/teachers/new",
+    },
+    {
+      id: "students",
+      label: "Add your first student",
+      complete: studentTotal > 0,
+      href: "/students/new",
+    },
+    {
+      id: "fees",
+      label: "Set fee categories",
+      complete: feesEnabled && categories.length > 0,
+      href: "/fees/settings",
+      disabled: feesKnownUnavailable,
+    },
+  ];
+  const activeOnboardingSteps = onboardingSteps.filter((s) => !s.disabled);
+  const onboardingAllComplete =
+    activeOnboardingSteps.length > 0 &&
+    activeOnboardingSteps.every((s) => s.complete);
+  const showGettingStartedCard =
+    isAdmin &&
+    onboardingDataReady &&
+    (setupGuideOpen ||
+      (!dismissOnboarding && !onboardingAllComplete));
+  const showSetupGuideLoading =
+    isAdmin && setupGuideOpen && !onboardingDataReady;
+  const setupGuideOnClose =
+    setupGuideOpen && (onboardingAllComplete || dismissOnboarding)
+      ? () => setSetupGuideOpen(false)
+      : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,15 +414,26 @@ const Dashboard = () => {
                 >
                   {user?.schoolName}
                 </h1>
-                <Link
-                  to="/settings/plans"
-                  title="View subscription plans"
-                  className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                    PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
-                  }`}
-                >
-                  {planDisplayName}
-                </Link>
+                {isAdmin ? (
+                  <Link
+                    to="/settings/plans"
+                    title="View subscription plans"
+                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                      PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
+                    }`}
+                  >
+                    {planDisplayName}
+                  </Link>
+                ) : (
+                  <span
+                    title="Current plan"
+                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${
+                      PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
+                    }`}
+                  >
+                    {planDisplayName}
+                  </span>
+                )}
               </div>
               <p
                 className="text-sm text-gray-600 truncate mt-0.5"
@@ -224,7 +448,7 @@ const Dashboard = () => {
             <div className="hidden lg:flex flex-shrink-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
               <NotificationBell />
               <NavbarAlertsLink />
-              {(user?.role === "admin" || user?.role === "teacher") &&
+              {(isAdmin || user?.role === "teacher") &&
                 feat("communication") && (
                   <Link
                     to="/announcements/new"
@@ -233,20 +457,16 @@ const Dashboard = () => {
                     <Megaphone className="w-4 h-4 shrink-0" /> New announcement
                   </Link>
                 )}
-              <button
-                type="button"
-                onClick={() => navigate("/settings/usage")}
-                className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
-              >
-                <Settings className="w-4 h-4 shrink-0" /> Settings
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
-              >
-                <LogOut className="w-4 h-4 shrink-0" /> Logout
-              </button>
+              {user?.role === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/settings/usage")}
+                  className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Settings className="w-4 h-4 shrink-0" /> Settings
+                </button>
+              )}
+              <LogoutButton className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap" />
             </div>
 
             <div className="flex lg:hidden flex-shrink-0 items-center gap-0.5">
@@ -277,7 +497,7 @@ const Dashboard = () => {
                 className="btn-secondary flex w-full items-center justify-center gap-2 py-2.5"
                 onNavigate={() => setNavMenuOpen(false)}
               />
-              {(user?.role === "admin" || user?.role === "teacher") &&
+              {(isAdmin || user?.role === "teacher") &&
                 feat("communication") && (
                   <Link
                     to="/announcements/new"
@@ -288,26 +508,24 @@ const Dashboard = () => {
                   </Link>
                 )}
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNavMenuOpen(false);
-                    navigate("/settings/usage");
-                  }}
-                  className="btn-secondary flex items-center justify-center gap-2 py-2.5"
-                >
-                  <Settings className="w-4 h-4 shrink-0" /> Settings
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNavMenuOpen(false);
-                    logout();
-                  }}
-                  className="btn-secondary flex items-center justify-center gap-2 py-2.5"
-                >
-                  <LogOut className="w-4 h-4 shrink-0" /> Logout
-                </button>
+                {user?.role === "admin" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNavMenuOpen(false);
+                      navigate("/settings/usage");
+                    }}
+                    className="btn-secondary flex items-center justify-center gap-2 py-2.5"
+                  >
+                    <Settings className="w-4 h-4 shrink-0" /> Settings
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <LogoutButton
+                  className="btn-secondary flex items-center justify-center gap-2 py-2.5 w-full"
+                  onBeforeLogout={() => setNavMenuOpen(false)}
+                />
               </div>
             </div>
           ) : null}
@@ -315,8 +533,45 @@ const Dashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* ── Upgrade Banner (free plan only) ── */}
-        {user?.subscriptionPlan === "free" && (
+        {isAdmin ? (
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSetupGuideOpen(true)}
+                className="btn-secondary text-sm py-2 px-3 inline-flex items-center gap-2"
+              >
+                <ListChecks className="w-4 h-4 shrink-0" />
+                Setup guide
+              </button>
+            </div>
+            {showSetupGuideLoading ? (
+              <div
+                className="rounded-xl border border-primary-200 bg-primary-50/40 px-4 py-3 text-sm text-gray-700 flex items-center gap-2"
+                role="status"
+                aria-live="polite"
+              >
+                <Loader2 className="w-4 h-4 shrink-0 animate-spin text-primary-600" />
+                Loading setup status…
+              </div>
+            ) : null}
+            {showGettingStartedCard ? (
+              <GettingStartedChecklist
+                steps={onboardingSteps}
+                forceShow={setupGuideOpen}
+                onClose={setupGuideOnClose}
+                onDismiss={() => {
+                  setDismissOnboarding(true);
+                  setSetupGuideOpen(false);
+                  window.localStorage.setItem(ONBOARDING_DISMISS_KEY, "1");
+                }}
+              />
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* ── Upgrade Banner (free plan only, from live usage — not stale JWT plan) ── */}
+        {showFreeUpgradeBanner && (
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-lg">
@@ -444,46 +699,50 @@ const Dashboard = () => {
             )}
           </Link>
 
-          {/* Teachers */}
-          <Link
-            to="/teachers"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-50 rounded-xl">
-                <GraduationCap className="w-6 h-6 text-green-600" />
+          {/* Teachers — admin only (directory + subscription usage) */}
+          {isAdmin && (
+            <Link
+              to="/teachers"
+              className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-50 rounded-xl">
+                  <GraduationCap className="w-6 h-6 text-green-600" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
-            </div>
-            <p className="text-sm text-gray-500 mb-1">Total Teachers</p>
-            <h3 className="text-3xl font-bold text-gray-900">{teacherTotal}</h3>
-            {teacherLimit && (
-              <div className="mt-3">
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span>
-                    Limit: {teacherLimit === 999999 ? "∞" : teacherLimit}
-                  </span>
+              <p className="text-sm text-gray-500 mb-1">Total Teachers</p>
+              <h3 className="text-3xl font-bold text-gray-900">
+                {teacherTotal}
+              </h3>
+              {teacherLimit && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>
+                      Limit: {teacherLimit === 999999 ? "∞" : teacherLimit}
+                    </span>
+                    {teacherLimit !== 999999 && (
+                      <span>{teacherPct.toFixed(0)}%</span>
+                    )}
+                  </div>
                   {teacherLimit !== 999999 && (
-                    <span>{teacherPct.toFixed(0)}%</span>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${
+                          teacherPct >= 90
+                            ? "bg-red-500"
+                            : teacherPct >= 75
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                        }`}
+                        style={{ width: `${Math.min(teacherPct, 100)}%` }}
+                      />
+                    </div>
                   )}
                 </div>
-                {teacherLimit !== 999999 && (
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div
-                      className={`h-1.5 rounded-full transition-all ${
-                        teacherPct >= 90
-                          ? "bg-red-500"
-                          : teacherPct >= 75
-                            ? "bg-yellow-500"
-                            : "bg-green-500"
-                      }`}
-                      style={{ width: `${Math.min(teacherPct, 100)}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </Link>
+              )}
+            </Link>
+          )}
 
           {/* Attendance */}
           <GatedLink
@@ -521,24 +780,25 @@ const Dashboard = () => {
             <p className="text-xs text-gray-400 mt-1">Assessments and marks</p>
           </GatedLink>
 
-          {/* Fees */}
-          <GatedLink
-            ok={feat("fees")}
-            to="/fees/students"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-50 rounded-xl">
-                <DollarSign className="w-6 h-6 text-green-600" />
+          {user?.role === "admin" && (
+            <GatedLink
+              ok={feat("fees")}
+              to="/fees/students"
+              className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-50 rounded-xl">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
-            </div>
-            <p className="text-sm text-gray-500 mb-1">Fee Management</p>
-            <h3 className="text-3xl font-bold text-gray-900 leading-none">
-              Collect
-            </h3>
-            <p className="text-xs text-gray-400 mt-1">Payments & Defaulters</p>
-          </GatedLink>
+              <p className="text-sm text-gray-500 mb-1">Fee Management</p>
+              <h3 className="text-3xl font-bold text-gray-900 leading-none">
+                Collect
+              </h3>
+              <p className="text-xs text-gray-400 mt-1">Payments & Defaulters</p>
+            </GatedLink>
+          )}
 
           {/* Diary */}
           <GatedLink
@@ -660,12 +920,18 @@ const Dashboard = () => {
               Not included on your current plan. Upgrade to use school-wide
               announcements and messaging.
             </p>
-            <Link
-              to="/settings/plans"
-              className="text-primary-700 font-semibold underline"
-            >
-              Compare plans
-            </Link>
+            {isAdmin ? (
+              <Link
+                to="/settings/plans"
+                className="text-primary-700 font-semibold underline"
+              >
+                Compare plans
+              </Link>
+            ) : (
+              <p className="text-amber-900/90">
+                Ask a school administrator if you need this feature enabled.
+              </p>
+            )}
           </div>
         )}
 
@@ -689,12 +955,16 @@ const Dashboard = () => {
           {!feat("events") ? (
             <p className="text-sm text-gray-500">
               Events are available on a higher plan.{" "}
-              <Link
-                to="/settings/plans"
-                className="text-primary-600 font-medium underline"
-              >
-                View plans
-              </Link>
+              {isAdmin ? (
+                <Link
+                  to="/settings/plans"
+                  className="text-primary-600 font-medium underline"
+                >
+                  View plans
+                </Link>
+              ) : (
+                <span>Contact your school administrator.</span>
+              )}
             </p>
           ) : !upcomingEvents?.length ? (
             <p className="text-sm text-gray-500">No events this month.</p>
@@ -724,26 +994,30 @@ const Dashboard = () => {
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <GatedButton
-              ok={feat("studentManagement")}
-              onClick={() => navigate("/students/new")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-all group"
-            >
-              <Users className="w-6 h-6 text-gray-400 group-hover:text-primary-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-primary-700 transition-colors">
-                Add Student
-              </p>
-            </GatedButton>
-            <GatedButton
-              ok={feat("teacherManagement")}
-              onClick={() => navigate("/teachers/new")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all group"
-            >
-              <GraduationCap className="w-6 h-6 text-gray-400 group-hover:text-green-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-green-700 transition-colors">
-                Add Teacher
-              </p>
-            </GatedButton>
+            {isAdmin && (
+              <GatedButton
+                ok={feat("studentManagement")}
+                onClick={() => navigate("/students/new")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-all group"
+              >
+                <Users className="w-6 h-6 text-gray-400 group-hover:text-primary-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-primary-700 transition-colors">
+                  Add Student
+                </p>
+              </GatedButton>
+            )}
+            {isAdmin && (
+              <GatedButton
+                ok={feat("teacherManagement")}
+                onClick={() => navigate("/teachers/new")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all group"
+              >
+                <GraduationCap className="w-6 h-6 text-gray-400 group-hover:text-green-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-green-700 transition-colors">
+                  Add Teacher
+                </p>
+              </GatedButton>
+            )}
             <GatedButton
               ok={feat("attendance")}
               onClick={() => navigate("/attendance/mark")}
@@ -764,25 +1038,42 @@ const Dashboard = () => {
                 View Reports
               </p>
             </GatedButton>
-            <button
-              onClick={() => navigate("/settings/usage")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all group"
-            >
-              <Zap className="w-6 h-6 text-gray-400 group-hover:text-blue-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-blue-700 transition-colors">
-                Subscription
-              </p>
-            </button>
-            <GatedButton
-              ok={feat("academicSettings")}
-              onClick={() => navigate("/settings/academic")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
-            >
-              <BookOpen className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-indigo-700 transition-colors">
-                Academic
-              </p>
-            </GatedButton>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate("/settings/usage")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all group"
+              >
+                <Zap className="w-6 h-6 text-gray-400 group-hover:text-blue-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-blue-700 transition-colors">
+                  Subscription
+                </p>
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate("/settings/password")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all group"
+              >
+                <KeyRound className="w-6 h-6 text-gray-400 group-hover:text-slate-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-slate-800 transition-colors">
+                  Password
+                </p>
+              </button>
+            )}
+            {isAdmin && (
+              <GatedButton
+                ok={feat("academicSettings")}
+                onClick={() => navigate("/settings/academic")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
+              >
+                <BookOpen className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-indigo-700 transition-colors">
+                  Academic
+                </p>
+              </GatedButton>
+            )}
             <GatedButton
               ok={feat("exams")}
               onClick={() => navigate("/exams")}
@@ -793,46 +1084,52 @@ const Dashboard = () => {
                 Exams
               </p>
             </GatedButton>
-            <GatedButton
-              ok={feat("fees")}
-              onClick={() => navigate("/fees/settings")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all group"
-            >
-              <Settings className="w-6 h-6 text-gray-400 group-hover:text-green-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-green-700 transition-colors text-center">
-                Fee Settings
-              </p>
-            </GatedButton>
-            <GatedButton
-              ok={feat("fees")}
-              onClick={() => navigate("/fees/reports")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-400 hover:bg-red-50 transition-all group"
-            >
-              <TrendingUp className="w-6 h-6 text-gray-400 group-hover:text-red-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-red-700 transition-colors text-center">
-                Revenue Analysis
-              </p>
-            </GatedButton>
-            <GatedButton
-              ok={feat("fees")}
-              onClick={() => navigate("/fees/students")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-all group"
-            >
-              <CreditCard className="w-6 h-6 text-gray-400 group-hover:text-primary-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-primary-700 transition-colors text-center">
-                Payments
-              </p>
-            </GatedButton>
-            <GatedButton
-              ok={feat("studentManagement")}
-              onClick={() => navigate("/students/promote")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
-            >
-              <Users className="w-6 h-6 text-gray-400 group-hover:text-emerald-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-emerald-700 transition-colors text-center">
-                Promote
-              </p>
-            </GatedButton>
+            {isAdmin && (
+              <>
+                <GatedButton
+                  ok={feat("fees")}
+                  onClick={() => navigate("/fees/settings")}
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all group"
+                >
+                  <Settings className="w-6 h-6 text-gray-400 group-hover:text-green-600 mb-2 mx-auto transition-colors" />
+                  <p className="text-sm font-medium text-gray-600 group-hover:text-green-700 transition-colors text-center">
+                    Fee Settings
+                  </p>
+                </GatedButton>
+                <GatedButton
+                  ok={feat("fees")}
+                  onClick={() => navigate("/fees/reports")}
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-400 hover:bg-red-50 transition-all group"
+                >
+                  <TrendingUp className="w-6 h-6 text-gray-400 group-hover:text-red-600 mb-2 mx-auto transition-colors" />
+                  <p className="text-sm font-medium text-gray-600 group-hover:text-red-700 transition-colors text-center">
+                    Revenue Analysis
+                  </p>
+                </GatedButton>
+                <GatedButton
+                  ok={feat("fees")}
+                  onClick={() => navigate("/fees/students")}
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary-400 hover:bg-primary-50 transition-all group"
+                >
+                  <CreditCard className="w-6 h-6 text-gray-400 group-hover:text-primary-600 mb-2 mx-auto transition-colors" />
+                  <p className="text-sm font-medium text-gray-600 group-hover:text-primary-700 transition-colors text-center">
+                    Payments
+                  </p>
+                </GatedButton>
+              </>
+            )}
+            {isAdmin && (
+              <GatedButton
+                ok={feat("studentManagement")}
+                onClick={() => navigate("/students/promote")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-emerald-400 hover:bg-emerald-50 transition-all group"
+              >
+                <Users className="w-6 h-6 text-gray-400 group-hover:text-emerald-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-emerald-700 transition-colors text-center">
+                  Promote
+                </p>
+              </GatedButton>
+            )}
             <GatedButton
               ok={feat("leaves")}
               onClick={() => navigate("/leaves")}
@@ -853,26 +1150,30 @@ const Dashboard = () => {
                 Events
               </p>
             </GatedButton>
-            <GatedButton
-              ok={feat("payroll")}
-              onClick={() => navigate("/payroll")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-rose-400 hover:bg-rose-50 transition-all group"
-            >
-              <DollarSign className="w-6 h-6 text-gray-400 group-hover:text-rose-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-rose-700 transition-colors text-center">
-                Payroll
-              </p>
-            </GatedButton>
-            <GatedButton
-              ok={feat("timetable")}
-              onClick={() => navigate("/timetable/editor")}
-              className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
-            >
-              <Calendar className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2 mx-auto transition-colors" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-indigo-700 transition-colors text-center">
-                Timetable Editor
-              </p>
-            </GatedButton>
+            {isAdmin && (
+              <GatedButton
+                ok={feat("payroll")}
+                onClick={() => navigate("/payroll")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-rose-400 hover:bg-rose-50 transition-all group"
+              >
+                <DollarSign className="w-6 h-6 text-gray-400 group-hover:text-rose-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-rose-700 transition-colors text-center">
+                  Payroll
+                </p>
+              </GatedButton>
+            )}
+            {isAdmin && (
+              <GatedButton
+                ok={feat("timetable")}
+                onClick={() => navigate("/timetable/editor")}
+                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group"
+              >
+                <Calendar className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2 mx-auto transition-colors" />
+                <p className="text-sm font-medium text-gray-600 group-hover:text-indigo-700 transition-colors text-center">
+                  Timetable Editor
+                </p>
+              </GatedButton>
+            )}
             <GatedButton
               ok={feat("timetable")}
               onClick={() => navigate("/timetable/view")}
@@ -909,12 +1210,14 @@ const Dashboard = () => {
               {user?.role}
             </span>
           </div>
-          <Link
-            to="/settings/usage"
-            className="text-primary-600 hover:text-primary-800 font-medium"
-          >
-            View Usage →
-          </Link>
+          {isAdmin ? (
+            <Link
+              to="/settings/usage"
+              className="text-primary-600 hover:text-primary-800 font-medium"
+            >
+              View Usage →
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>

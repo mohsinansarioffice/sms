@@ -5,9 +5,12 @@ import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import { PriorityBadge } from './priorityBadges';
 import { useSchoolPlanFeatures } from '../../hooks/useSchoolPlanFeatures';
+import useAuthStore from '../../store/authStore';
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
   const { feature, ready } = useSchoolPlanFeatures();
   const comm = feature('communication');
 
@@ -77,9 +80,15 @@ const NotificationCenter = () => {
             <p className="text-sm text-gray-600">
               Upgrade to Basic or Premium to use the notification center, school announcements, and messaging.
             </p>
-            <Link to="/settings/plans" className="btn-primary inline-flex">
-              View plans
-            </Link>
+            {isAdmin ? (
+              <Link to="/settings/plans" className="btn-primary inline-flex">
+                View plans
+              </Link>
+            ) : (
+              <p className="text-sm text-gray-600">
+                Ask a school administrator if you need this feature enabled.
+              </p>
+            )}
           </div>
         </div>
       </div>

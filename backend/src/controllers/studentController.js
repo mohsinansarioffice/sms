@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const School = require('../models/School');
+const Attendance = require('../models/Attendance');
+const Announcement = require('../models/Announcement');
+const ExamResult = require('../models/ExamResult');
+const FeePayment = require('../models/FeePayment');
+const StudentFee = require('../models/StudentFee');
 
 function requireSchoolId(req, res) {
   if (!req.user?.schoolId) {
@@ -169,6 +174,146 @@ exports.getStudent = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to load student',
+    });
+  }
+};
+
+/**
+ * GET /api/students/portal/dashboard
+ */
+exports.getStudentPortalDashboard = async (req, res) => {
+  try {
+    if (!requireSchoolId(req, res)) return;
+
+    const userId = req.user._id || req.user.id;
+    const student = await Student.findOne({
+      schoolId: req.user.schoolId,
+      userId,
+      isActive: true,
+    })
+      .populate('academicInfo.classId', 'name')
+      .populate('academicInfo.sectionId', 'name')
+      .lean();
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'No student profile is linked to this account',
+      });
+    }
+
+    const examResults = await ExamResult.find({
+      schoolId: req.user.schoolId,
+      studentId: student._id,
+    })
+      .populate({
+        path: 'examId',
+        populate: [{ path: 'subjectId', select: 'name' }, { path: 'examTypeId', select: 'name' }],
+      })
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean();
+
+    const attendanceRows = await Attendance.find({
+      schoolId: req.user.schoolId,
+      'records.studentId': student._id,
+    }).lean();
+
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let excused = 0;
+    attendanceRows.forEach((row) => {
+      const record = row.records.find((entry) => String(entry.studentId) === String(student._id));
+      if (!record) return;
+      if (record.status === 'present') present += 1;
+      if (record.status === 'absent') absent += 1;
+      if (record.status === 'late') late += 1;
+      if (record.status === 'excused') excused += 1;
+    });
+    const attendanceTotal = present + absent + late + excused;
+    const attendancePercentage = attendanceTotal
+      ? (((present + late) / attendanceTotal) * 100).toFixed(2)
+      : '0.00';
+
+    const studentFees = await StudentFee.find({
+      schoolId: req.user.schoolId,
+      studentId: student._id,
+    }).lean();
+    const totalFees = studentFees.reduce((sum, fee) => sum + Number(fee.totalAmount || 0), 0);
+    const totalPaid = studentFees.reduce((sum, fee) => sum + Number(fee.paidAmount || 0), 0);
+    const totalDiscount = studentFees.reduce((sum, fee) => sum + Number(fee.discount || 0), 0);
+    const outstanding = totalFees - totalPaid - totalDiscount;
+
+    const recentPayments = await FeePayment.find({
+      schoolId: req.user.schoolId,
+      studentId: student._id,
+    })
+      .sort({ paymentDate: -1 })
+      .limit(5)
+      .lean();
+
+    const classId = student.academicInfo?.classId?._id || student.academicInfo?.classId || null;
+    const audienceFilter = [{ targetAudience: { $in: ['all', 'students'] } }];
+    if (classId) {
+      audienceFilter.push({
+        targetAudience: 'specific_class',
+        targetClasses: classId,
+      });
+    }
+
+    const announcements = await Announcement.find({
+      schoolId: req.user.schoolId,
+      isActive: true,
+      $or: audienceFilter,
+    })
+      .sort({ isPinned: -1, createdAt: -1 })
+      .limit(8)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        student: {
+          _id: student._id,
+          name: `${student.personalInfo?.firstName || ''} ${student.personalInfo?.lastName || ''}`.trim(),
+          admissionNumber: student.admissionNumber,
+          className: student.academicInfo?.classId?.name || student.academicInfo?.class,
+          sectionName: student.academicInfo?.sectionId?.name || student.academicInfo?.section,
+        },
+        attendance: {
+          totalDays: attendanceTotal,
+          present,
+          absent,
+          late,
+          excused,
+          percentage: Number(attendancePercentage),
+        },
+        academics: {
+          results: examResults,
+          averagePercentage: examResults.length
+            ? Number(
+                (
+                  examResults.reduce((sum, row) => sum + Number(row.percentage || 0), 0) / examResults.length
+                ).toFixed(2)
+              )
+            : 0,
+        },
+        fees: {
+          totalFees,
+          totalPaid,
+          totalDiscount,
+          outstanding,
+          recentPayments,
+        },
+        announcements,
+      },
+    });
+  } catch (err) {
+    console.error('getStudentPortalDashboard error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load student portal dashboard',
     });
   }
 };

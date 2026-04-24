@@ -44,6 +44,27 @@ exports.getUsage = async (req, res) => {
     const school = await School.findById(req.user.schoolId);
     const plan = PLANS[school.subscriptionPlan];
 
+    const features = { ...plan.features };
+    const overrides = school.featureOverrides;
+    if (overrides && typeof overrides.forEach === 'function') {
+      overrides.forEach((value, key) => {
+        features[key] = value;
+      });
+    }
+
+    if (req.user.role === 'teacher') {
+      return res.status(200).json({
+        success: true,
+        data: {
+          plan: {
+            name: plan.name,
+            id: school.subscriptionPlan
+          },
+          features
+        }
+      });
+    }
+
     const studentCount = await Student.countDocuments({
       schoolId: req.user.schoolId,
       isActive: true
@@ -61,14 +82,6 @@ exports.getUsage = async (req, res) => {
     const teachersPercentage = plan.limits.maxTeachers === 999999
       ? 0
       : (teacherCount / plan.limits.maxTeachers) * 100;
-
-    const features = { ...plan.features };
-    const overrides = school.featureOverrides;
-    if (overrides && typeof overrides.forEach === 'function') {
-      overrides.forEach((value, key) => {
-        features[key] = value;
-      });
-    }
 
     res.status(200).json({
       success: true,

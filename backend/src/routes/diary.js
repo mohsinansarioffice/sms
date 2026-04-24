@@ -71,14 +71,14 @@ const updateValidation = [
     .isIn(['draft', 'published']).withMessage('Status must be draft or published')
 ];
 
-// List all entries — admin/teacher full access; parent scoped to child
-router.get('/', protect, diaryGate, authorize('admin', 'teacher', 'parent'), getDiaryEntries);
+// List all entries — admin/teacher full access; parent/student scoped to child/self
+router.get('/', protect, diaryGate, authorize('admin', 'teacher', 'parent', 'student'), getDiaryEntries);
 
 // Class diary view — for parent portal and timetable-style view
-router.get('/class', protect, diaryGate, authorize('admin', 'teacher', 'parent'), getClassDiary);
+router.get('/class', protect, diaryGate, authorize('admin', 'teacher', 'parent', 'student'), getClassDiary);
 
 // Single entry
-router.get('/:id', protect, diaryGate, authorize('admin', 'teacher', 'parent'), param('id').isMongoId(), getDiaryEntry);
+router.get('/:id', protect, diaryGate, authorize('admin', 'teacher', 'parent', 'student'), param('id').isMongoId(), getDiaryEntry);
 
 // Create
 router.post('/', protect, diaryGate, authorize('admin', 'teacher'), entryValidation, createDiaryEntry);

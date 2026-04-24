@@ -38,9 +38,9 @@ function applyParentClassSectionFilter(filter, student) {
   return { ok: true };
 }
 
-// @desc    Get diary entries (admin/teacher: filtered list; parent: child's class entries)
+// @desc    Get diary entries (admin/teacher: filtered list; parent/student: scoped class entries)
 // @route   GET /api/diary
-// @access  Private (admin, teacher, parent)
+// @access  Private (admin, teacher, parent, student)
 exports.getDiaryEntries = async (req, res) => {
   try {
     const { classId, sectionId, date, startDate, endDate, type, status, page = 1, limit = 30 } = req.query;
@@ -49,7 +49,7 @@ exports.getDiaryEntries = async (req, res) => {
 
     const filter = { schoolId };
 
-    // Parent role: automatically scope to their child's class
+    // Parent/student role: automatically scope to linked student's class
     if (role === 'parent') {
       const parentId = req.user._id || req.user.id;
       let targetStudentId = req.query.studentId;
@@ -62,6 +62,25 @@ exports.getDiaryEntries = async (req, res) => {
       if (targetStudentId) studentQuery._id = targetStudentId;
 
       const student = await Student.findOne(studentQuery)
+        .populate('academicInfo.classId', 'name')
+        .populate('academicInfo.sectionId', 'name')
+        .lean();
+
+      if (!student) {
+        return res.status(404).json({ success: false, message: 'No linked student found' });
+      }
+
+      const applied = applyParentClassSectionFilter(filter, student);
+      if (!applied.ok) {
+        return res.status(400).json({ success: false, message: applied.message });
+      }
+      filter.status = 'published';
+    } else if (role === 'student') {
+      const student = await Student.findOne({
+        schoolId,
+        userId: req.user._id || req.user.id,
+        isActive: true,
+      })
         .populate('academicInfo.classId', 'name')
         .populate('academicInfo.sectionId', 'name')
         .lean();
@@ -131,7 +150,7 @@ exports.getDiaryEntries = async (req, res) => {
 
 // @desc    Get diary entries for a specific class/section by date (lightweight, for parent/student view)
 // @route   GET /api/diary/class
-// @access  Private (admin, teacher, parent)
+// @access  Private (admin, teacher, parent, student)
 exports.getClassDiary = async (req, res) => {
   try {
     const { classId, sectionId, date, startDate, endDate } = req.query;
@@ -150,6 +169,20 @@ exports.getClassDiary = async (req, res) => {
       }
 
       const student = await Student.findOne(studentQuery).lean();
+      if (!student) {
+        return res.status(404).json({ success: false, message: 'No linked student found' });
+      }
+
+      const applied = applyParentClassSectionFilter(filter, student);
+      if (!applied.ok) {
+        return res.status(400).json({ success: false, message: applied.message });
+      }
+    } else if (role === 'student') {
+      const student = await Student.findOne({
+        schoolId,
+        userId: req.user._id || req.user.id,
+        isActive: true,
+      }).lean();
       if (!student) {
         return res.status(404).json({ success: false, message: 'No linked student found' });
       }
@@ -226,8 +259,8 @@ exports.getDiaryEntry = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Diary entry not found' });
     }
 
-    // Parents can only see published entries
-    if (req.user.role === 'parent' && entry.status !== 'published') {
+    // Parent/student can only see published entries
+    if ((req.user.role === 'parent' || req.user.role === 'student') && entry.status !== 'published') {
       return res.status(404).json({ success: false, message: 'Diary entry not found' });
     }
 

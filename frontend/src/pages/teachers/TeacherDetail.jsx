@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Edit, Trash2, User, Phone, BookOpen,
   Briefcase, MapPin, Calendar, AlertCircle, Loader2,
-  LogOut, DollarSign, Award
+  DollarSign, Award, UserPlus, KeyRound, Unlink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useTeacherStore from '../../store/teacherStore';
 import useAuthStore from '../../store/authStore';
+import axios from '../../lib/axios';
+import LogoutButton from '../../components/common/LogoutButton';
 
 // ── Info row helper ────────────────────────────────────────────────────────────
 const InfoRow = ({ label, value }) => (
@@ -46,8 +48,20 @@ const TagList = ({ items }) => {
 const TeacherDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { currentTeacher: teacher, isLoading, error, fetchTeacher, deleteTeacher, clearError } = useTeacherStore();
+  const [showCreateLoginModal, setShowCreateLoginModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isUnlinkingLogin, setIsUnlinkingLogin] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [loginForm, setLoginForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
 
   useEffect(() => {
     if (id) fetchTeacher(id);
@@ -62,6 +76,78 @@ const TeacherDetail = () => {
       navigate('/teachers');
     } else {
       toast.error(result.error || 'Failed to delete teacher');
+    }
+  };
+
+  const openCreateLoginModal = () => {
+    setLoginForm({
+      name: fullName || '',
+      email: teacher?.contactInfo?.email || '',
+      phone: teacher?.contactInfo?.phone || '',
+      password: '',
+    });
+    setShowCreateLoginModal(true);
+  };
+
+  const submitCreateLogin = async (event) => {
+    event.preventDefault();
+    if (!loginForm.email || !/^\S+@\S+\.\S+$/.test(loginForm.email)) {
+      toast.error('Please enter a valid email');
+      return;
+    }
+    if (!loginForm.password || loginForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setIsSubmittingLogin(true);
+    try {
+      await axios.post('/auth/create-teacher-account', {
+        teacherId: id,
+        name: loginForm.name.trim(),
+        email: loginForm.email.trim().toLowerCase(),
+        phone: loginForm.phone.trim(),
+        password: loginForm.password,
+      });
+      toast.success('Teacher login account created successfully');
+      setShowCreateLoginModal(false);
+      await fetchTeacher(id);
+    } catch (err) {
+      toast.error(err.message || 'Failed to create teacher login');
+    } finally {
+      setIsSubmittingLogin(false);
+    }
+  };
+
+  const submitResetPassword = async (event) => {
+    event.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setIsResettingPassword(true);
+    try {
+      await axios.put(`/auth/teachers/${id}/password`, { newPassword });
+      toast.success('Teacher password reset successfully');
+      setShowResetPasswordModal(false);
+      setNewPassword('');
+    } catch (err) {
+      toast.error(err.message || 'Failed to reset password');
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const unlinkTeacherLogin = async () => {
+    if (!window.confirm('Unlink this teacher login? The account will be deactivated.')) return;
+    setIsUnlinkingLogin(true);
+    try {
+      const response = await axios.delete(`/auth/teachers/${id}`);
+      toast.success(response?.message || 'Teacher login unlinked successfully');
+      await fetchTeacher(id);
+    } catch (err) {
+      toast.error(err.message || 'Failed to unlink teacher login');
+    } finally {
+      setIsUnlinkingLogin(false);
     }
   };
 
@@ -108,9 +194,7 @@ const TeacherDetail = () => {
               <p className="text-xs text-gray-500">Teacher Profile</p>
             </div>
           </div>
-          <button onClick={logout} className="btn-secondary flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
+          <LogoutButton className="btn-secondary flex items-center gap-2" />
         </div>
       </nav>
 
@@ -159,6 +243,59 @@ const TeacherDetail = () => {
             </span>
           )}
         </div>
+
+        {user?.role === 'admin' && (
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4 pb-3 border-b">
+              <User className="w-5 h-5 text-primary-600" />
+              Account Access
+            </h3>
+            {!teacher.userId ? (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-gray-600">
+                  This teacher does not have a login account yet.
+                </p>
+                <button
+                  type="button"
+                  onClick={openCreateLoginModal}
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Create Login Account
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 w-fit">
+                  Teacher Login Linked
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPasswordModal(true)}
+                    className="btn-secondary inline-flex items-center gap-2 text-sm"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    Reset Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={unlinkTeacherLogin}
+                    disabled={isUnlinkingLogin}
+                    className="px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 inline-flex items-center gap-2 text-sm disabled:opacity-60"
+                  >
+                    {isUnlinkingLogin ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlink className="w-4 h-4" />
+                    )}
+                    Unlink Login
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Info grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -237,6 +374,101 @@ const TeacherDetail = () => {
           </div>
         </div>
       </div>
+
+      {showCreateLoginModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-xl border border-gray-200">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Create Teacher Login</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Create a login account linked to this teacher profile.
+              </p>
+            </div>
+            <form onSubmit={submitCreateLogin} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Display Name</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={loginForm.name}
+                  onChange={(e) => setLoginForm((prev) => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm((prev) => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={loginForm.phone}
+                  onChange={(e) => setLoginForm((prev) => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password *</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm((prev) => ({ ...prev, password: e.target.value }))}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex gap-3">
+                <button type="submit" disabled={isSubmittingLogin} className="btn-primary inline-flex items-center gap-2">
+                  {isSubmittingLogin ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Create Login
+                </button>
+                <button type="button" onClick={() => setShowCreateLoginModal(false)} className="btn-secondary">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showResetPasswordModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-gray-200">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Reset Teacher Password</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Set a new password for this teacher account.
+              </p>
+            </div>
+            <form onSubmit={submitResetPassword} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password *</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                />
+              </div>
+              <div className="pt-3 border-t border-gray-100 flex gap-3">
+                <button type="submit" disabled={isResettingPassword} className="btn-primary inline-flex items-center gap-2">
+                  {isResettingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Reset Password
+                </button>
+                <button type="button" onClick={() => setShowResetPasswordModal(false)} className="btn-secondary">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

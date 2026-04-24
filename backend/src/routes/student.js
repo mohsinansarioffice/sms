@@ -9,6 +9,7 @@ const {
   createStudent,
   updateStudent,
   deleteStudent,
+  getStudentPortalDashboard,
   promoteStudents,
   importStudents,
 } = require('../controllers/studentController');
@@ -124,6 +125,13 @@ const updateValidation = [
     return true;
   }),
 ];
+
+router.get(
+  '/portal/dashboard',
+  protect,
+  authorize('student'),
+  getStudentPortalDashboard
+);
 
 router.get(
   '/',

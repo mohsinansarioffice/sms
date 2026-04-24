@@ -5,7 +5,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/plans', protect, getPlans);
+router.get('/plans', protect, authorize('admin'), getPlans);
 router.get('/usage', protect, getUsage);
 router.post(
   '/change-plan',

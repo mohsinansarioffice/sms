@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, LogOut, ChevronDown, BookOpen, Mail } from 'lucide-react';
-import { format } from 'date-fns';
-import useAuthStore from '../../store/authStore';
-import useParentStore from '../../store/parentStore';
-import useDiaryStore from '../../store/diaryStore';
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Loader2, ChevronDown, BookOpen, Mail } from "lucide-react";
+import { format } from "date-fns";
+import useAuthStore from "../../store/authStore";
+import LogoutButton from "../../components/common/LogoutButton";
+import useParentStore from "../../store/parentStore";
+import useDiaryStore from "../../store/diaryStore";
 
 const ParentDashboard = () => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const {
     children,
     dashboard,
@@ -28,7 +29,7 @@ const ParentDashboard = () => {
   useEffect(() => {
     if (!selectedStudentId) return;
     fetchClassDiary({
-      date: format(new Date(), 'yyyy-MM-dd'),
+      date: format(new Date(), "yyyy-MM-dd"),
       studentId: selectedStudentId,
     });
   }, [selectedStudentId, fetchClassDiary]);
@@ -50,15 +51,13 @@ const ParentDashboard = () => {
               <h1 className="text-xl font-bold text-gray-900">Parent Portal</h1>
               <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
             </div>
-            <button type="button" onClick={logout} className="btn-secondary inline-flex items-center gap-2">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
           </div>
         </nav>
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="card text-center text-gray-600">
-            No student is linked to your account yet. Please contact the school office.
+            No student is linked to your account yet. Please contact the school
+            office.
           </div>
         </div>
       </div>
@@ -72,8 +71,12 @@ const ParentDashboard = () => {
           <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
         ) : (
           <div className="card max-w-md text-center text-gray-700">
-            <p className="font-medium text-gray-900 mb-1">Could not load dashboard</p>
-            <p className="text-sm">{error || 'Something went wrong. Try logging in again.'}</p>
+            <p className="font-medium text-gray-900 mb-1">
+              Could not load dashboard
+            </p>
+            <p className="text-sm">
+              {error || "Something went wrong. Try logging in again."}
+            </p>
           </div>
         )}
       </div>
@@ -95,14 +98,14 @@ const ParentDashboard = () => {
               <div className="relative inline-flex items-center">
                 <select
                   className="input-field py-2 pr-8 pl-3 text-sm font-medium min-w-[200px] appearance-none cursor-pointer"
-                  value={selectedStudentId || ''}
+                  value={selectedStudentId || ""}
                   onChange={(e) => selectChildAndRefresh(e.target.value)}
                   aria-label="Select child"
                 >
                   {children.map((c) => (
                     <option key={c._id} value={c._id}>
                       {c.name}
-                      {c.admissionNumber ? ` (${c.admissionNumber})` : ''}
+                      {c.admissionNumber ? ` (${c.admissionNumber})` : ""}
                     </option>
                   ))}
                 </select>
@@ -116,10 +119,7 @@ const ParentDashboard = () => {
               <Mail className="w-4 h-4" />
               Messages
             </Link>
-            <button type="button" onClick={logout} className="btn-secondary inline-flex items-center gap-2">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
+            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
           </div>
         </div>
       </nav>
@@ -128,37 +128,49 @@ const ParentDashboard = () => {
         <div className="card">
           <h2 className="text-lg font-bold text-gray-900">{student.name}</h2>
           <p className="text-sm text-gray-500">
-            {student.admissionNumber} | {student.className} {student.sectionName}
+            {student.admissionNumber} | {student.className}{" "}
+            {student.sectionName}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card">
             <p className="text-sm text-gray-500">Attendance</p>
-            <p className="text-2xl font-bold text-primary-700">{attendance.percentage}%</p>
+            <p className="text-2xl font-bold text-primary-700">
+              {attendance.percentage}%
+            </p>
           </div>
           <div className="card">
             <p className="text-sm text-gray-500">Average Result</p>
-            <p className="text-2xl font-bold text-green-700">{academics.averagePercentage}%</p>
+            <p className="text-2xl font-bold text-green-700">
+              {academics.averagePercentage}%
+            </p>
           </div>
           <div className="card">
             <p className="text-sm text-gray-500">Outstanding Fees</p>
-            <p className="text-2xl font-bold text-red-700">Rs. {fees.outstanding.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-red-700">
+              Rs. {fees.outstanding.toLocaleString()}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
-            <h3 className="font-semibold text-gray-900 mb-3">Latest Exam Results</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">
+              Latest Exam Results
+            </h3>
             {!academics.results.length ? (
               <p className="text-sm text-gray-500">No exam results yet.</p>
             ) : (
               <div className="space-y-2">
                 {academics.results.slice(0, 6).map((result) => (
                   <div key={result._id} className="border rounded-lg p-3">
-                    <p className="text-sm font-medium text-gray-900">{result.examId?.name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {result.examId?.name}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      {result.examId?.subjectId?.name} - {result.percentage}% ({result.grade})
+                      {result.examId?.subjectId?.name} - {result.percentage}% (
+                      {result.grade})
                     </p>
                   </div>
                 ))}
@@ -167,15 +179,21 @@ const ParentDashboard = () => {
           </div>
 
           <div className="card">
-            <h3 className="font-semibold text-gray-900 mb-3">Recent Announcements</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">
+              Recent Announcements
+            </h3>
             {!announcements.length ? (
               <p className="text-sm text-gray-500">No announcements.</p>
             ) : (
               <div className="space-y-2">
                 {announcements.map((item) => (
                   <div key={item._id} className="border rounded-lg p-3">
-                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">{item.content?.slice(0, 120)}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {item.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {item.content?.slice(0, 120)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -188,9 +206,12 @@ const ParentDashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary-600" />
-              Today's Diary — {format(new Date(), 'EEE, MMM d')}
+              Today's Diary — {format(new Date(), "EEE, MMM d")}
             </h3>
-            <Link to="/diary/view" className="text-sm text-primary-600 font-medium">
+            <Link
+              to="/diary/view"
+              className="text-sm text-primary-600 font-medium"
+            >
               View full diary →
             </Link>
           </div>
@@ -199,40 +220,55 @@ const ParentDashboard = () => {
               ...classGrouped.homework,
               ...classGrouped.notice,
               ...classGrouped.classwork,
-              ...classGrouped.remark
+              ...classGrouped.remark,
             ];
             if (!allEntries.length) {
-              return <p className="text-sm text-gray-500">No diary entries for today.</p>;
+              return (
+                <p className="text-sm text-gray-500">
+                  No diary entries for today.
+                </p>
+              );
             }
             const TYPE_COLORS = {
-              homework: 'bg-blue-100 text-blue-800',
-              classwork: 'bg-green-100 text-green-800',
-              notice: 'bg-yellow-100 text-yellow-800',
-              remark: 'bg-gray-100 text-gray-700'
+              homework: "bg-blue-100 text-blue-800",
+              classwork: "bg-green-100 text-green-800",
+              notice: "bg-yellow-100 text-yellow-800",
+              remark: "bg-gray-100 text-gray-700",
             };
             return (
               <div className="space-y-2">
                 {allEntries.slice(0, 5).map((entry) => (
                   <div key={entry._id} className="border rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${TYPE_COLORS[entry.type] || ''}`}>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${TYPE_COLORS[entry.type] || ""}`}
+                      >
                         {entry.type}
                       </span>
                       {entry.subjectId?.name && (
-                        <span className="text-xs text-primary-700 font-medium">{entry.subjectId.name}</span>
+                        <span className="text-xs text-primary-700 font-medium">
+                          {entry.subjectId.name}
+                        </span>
                       )}
-                      {entry.type === 'homework' && entry.dueDate && (
+                      {entry.type === "homework" && entry.dueDate && (
                         <span className="text-xs text-orange-600 ml-auto">
-                          Due: {format(new Date(entry.dueDate), 'MMM d')}
+                          Due: {format(new Date(entry.dueDate), "MMM d")}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-gray-900">{entry.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{entry.description}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {entry.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                      {entry.description}
+                    </p>
                   </div>
                 ))}
                 {allEntries.length > 5 && (
-                  <Link to="/diary/view" className="text-sm text-primary-600 hover:underline">
+                  <Link
+                    to="/diary/view"
+                    className="text-sm text-primary-600 hover:underline"
+                  >
                     +{allEntries.length - 5} more entries
                   </Link>
                 )}
