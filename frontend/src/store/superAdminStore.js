@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import axios from '../lib/axios';
+import { create } from "zustand";
+import axios from "../lib/axios";
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res;
 
@@ -10,7 +10,7 @@ const useSuperAdminStore = create((set, get) => ({
   total: 0,
   currentPage: 1,
   totalPages: 1,
-  search: '',
+  search: "",
   schoolDetail: null,
   isLoading: false,
   error: null,
@@ -20,7 +20,7 @@ const useSuperAdminStore = create((set, get) => ({
   fetchOverview: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await axios.get('/superadmin/overview');
+      const res = await axios.get("/superadmin/overview");
       set({ overview: unwrap(res), isLoading: false });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -29,7 +29,7 @@ const useSuperAdminStore = create((set, get) => ({
 
   fetchPaymentAlerts: async () => {
     try {
-      const res = await axios.get('/superadmin/payment-alerts');
+      const res = await axios.get("/superadmin/payment-alerts");
       const d = unwrap(res);
       set({
         paymentAlerts: {
@@ -43,19 +43,39 @@ const useSuperAdminStore = create((set, get) => ({
     }
   },
 
-  fetchSchools: async (page = 1, search = '') => {
+  /**
+   * @param {string} search - server-side name filter
+   * @param {{ limit?: number }} [opts] - page size per request; fetches all pages for the table
+   */
+  fetchSchools: async (search = "", opts = {}) => {
+    const limit = opts.limit ?? 2000;
     set({ isLoading: true, error: null, search });
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (search && search.trim()) params.set('search', search.trim());
-      const res = await axios.get(`/superadmin/schools?${params.toString()}`);
-      const d = unwrap(res);
+      let page = 1;
+      const all = [];
+      let total = 0;
+      let totalPages = 1;
+      while (page <= totalPages) {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+        });
+        if (search && search.trim()) params.set("search", search.trim());
+        const res = await axios.get(`/superadmin/schools?${params.toString()}`);
+        const d = unwrap(res);
+        const batch = d.schools || [];
+        all.push(...batch);
+        total = d.total ?? all.length;
+        totalPages = d.totalPages || 1;
+        page += 1;
+        if (batch.length === 0) break;
+      }
       set({
-        schools: d.schools || [],
-        total: d.total ?? 0,
-        currentPage: d.currentPage || page,
-        totalPages: d.totalPages || 1,
-        isLoading: false
+        schools: all,
+        total,
+        currentPage: 1,
+        totalPages: 1,
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -75,12 +95,15 @@ const useSuperAdminStore = create((set, get) => ({
   updateSchoolPlan: async (id, payload) => {
     try {
       const body =
-        typeof payload === 'string'
+        typeof payload === "string"
           ? { newPlan: payload }
-          : { newPlan: payload.newPlan, paymentDueDate: payload.paymentDueDate };
+          : {
+              newPlan: payload.newPlan,
+              paymentDueDate: payload.paymentDueDate,
+            };
       await axios.patch(`/superadmin/schools/${id}/plan`, body);
       await get().fetchSchool(id);
-      await get().fetchSchools(get().currentPage, get().search);
+      await get().fetchSchools(get().search);
       await get().fetchPaymentAlerts();
       return { success: true };
     } catch (error) {
@@ -92,7 +115,7 @@ const useSuperAdminStore = create((set, get) => ({
     try {
       await axios.patch(`/superadmin/schools/${id}/features`, payload);
       await get().fetchSchool(id);
-      await get().fetchSchools(get().currentPage, get().search);
+      await get().fetchSchools(get().search);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -102,7 +125,7 @@ const useSuperAdminStore = create((set, get) => ({
   updateSchoolActive: async (id, isActive) => {
     try {
       await axios.patch(`/superadmin/schools/${id}/active`, { isActive });
-      await get().fetchSchools(get().currentPage, get().search);
+      await get().fetchSchools(get().search);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -113,12 +136,17 @@ const useSuperAdminStore = create((set, get) => ({
     try {
       const res = await axios.post(
         `/superadmin/schools/${schoolId}/admin/reset-password`,
-        newPassword != null && String(newPassword).trim() !== ''
+        newPassword != null && String(newPassword).trim() !== ""
           ? { newPassword: String(newPassword) }
-          : {}
+          : {},
       );
       const d = unwrap(res);
-      return { success: true, userId: d.userId, email: d.email, newPassword: d.newPassword };
+      return {
+        success: true,
+        userId: d.userId,
+        email: d.email,
+        newPassword: d.newPassword,
+      };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -126,12 +154,12 @@ const useSuperAdminStore = create((set, get) => ({
 
   createSuperAdmin: async (payload) => {
     try {
-      await axios.post('/superadmin/admins', payload);
+      await axios.post("/superadmin/admins", payload);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
-  }
+  },
 }));
 
 export default useSuperAdminStore;

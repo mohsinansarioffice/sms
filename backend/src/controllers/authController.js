@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const School = require('../models/School');
 const Student = require('../models/Student');
@@ -144,6 +145,10 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // #region agent log
+    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H1',location:'authController.js:login:entry',message:'login start',data:{readyState:mongoose.connection.readyState,hasJwtSecret:Boolean(process.env.JWT_SECRET)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
     // Check if user exists (include password for comparison)
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     
@@ -193,6 +198,10 @@ exports.login = async (req, res) => {
       user.schoolId || null
     );
 
+    // #region agent log
+    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H3',location:'authController.js:login:postSession',message:'issueSession ok, profile shape',data:{hasProfile:Boolean(user.profile),hasProfileName:Boolean(user.profile&&user.profile.name),role:user.role},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
     console.log('Login successful:', user.email);
 
     res.status(200).json({
@@ -214,6 +223,9 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H1-H4',location:'authController.js:login:catch',message:'login threw',data:{errName:error&&error.name,errMessage:error&&error.message,errCode:error&&error.code,readyState:mongoose.connection.readyState,isTypeError:error instanceof TypeError},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     console.error('Login Error:', error);
     res.status(500).json({
       success: false,

@@ -75,6 +75,9 @@ exports.createAcademicYear = async (req, res) => {
       data: { year }
     });
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H7',location:'academicController.js:createAcademicYear:catch',message:'create year failed',data:{errName:error&&error.name,errMessage:error&&error.message,errCode:error&&error.code},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     console.error('Create Academic Year Error:', error);
     if (error.code === 11000) {
       return res.status(400).json({ success: false, message: 'Academic year with this name already exists' });

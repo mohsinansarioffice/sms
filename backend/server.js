@@ -1,9 +1,7 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
-const { applyMongoDnsFromEnv } = require("./src/utils/mongoDns");
-applyMongoDnsFromEnv();
+const connectDB = require("./src/lib/dbConnect");
 
 const app = express();
 
@@ -28,16 +26,15 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection (do not process.exit on Vercel — serverless would terminate the function)
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    if (!process.env.VERCEL) {
-      process.exit(1);
-    }
-  });
+// Await DB before any route (fixes Mongoose "buffering timed out" on Vercel cold starts)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Routes
 app.use("/api/auth", require("./src/routes/auth"));

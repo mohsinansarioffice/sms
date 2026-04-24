@@ -14,6 +14,9 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
+      // #region agent log
+      fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H6',location:'auth.js:protect:noToken',message:'auth 401',data:{reason:'no_bearer_token'},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return res.status(401).json({
         success: false,
         message: 'Not authorized to access this route'
@@ -34,6 +37,9 @@ exports.protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select('-password');
       
       if (!req.user) {
+        // #region agent log
+        fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H6',location:'auth.js:protect:userNotFound',message:'auth 401',data:{reason:'user_not_in_db'},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         return res.status(401).json({
           success: false,
           message: 'User not found'
@@ -65,12 +71,18 @@ exports.protect = async (req, res, next) => {
 
       next();
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H6',location:'auth.js:protect:jwtFail',message:'auth 401 jwt',data:{reason:'invalid_or_expired_jwt',jwtMessage:error&&error.message},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return res.status(401).json({
         success: false,
         message: 'Invalid or expired token'
       });
     }
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H1',location:'auth.js:protect:outer',message:'auth 500',data:{errName:error&&error.name,errMessage:error&&error.message},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     console.error('Auth middleware error:', error);
     return res.status(500).json({
       success: false,
