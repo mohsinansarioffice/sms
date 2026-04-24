@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, GraduationCap, AlertCircle, CheckCircle, ArrowLeft, ExternalLink, Loader2, KeyRound } from 'lucide-react';
+import { Users, GraduationCap, AlertCircle, CheckCircle, ExternalLink, Loader2, KeyRound } from 'lucide-react';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const FEATURE_LABELS = {
   attendance: 'Attendance',
@@ -114,18 +116,14 @@ const Usage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Nav */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3 sm:gap-4 min-w-0">
-          <BrandLogo linkTo="/dashboard" />
-          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
-            <p className="text-xs text-gray-500">Usage & Limits</p>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Usage & limits"
+        />
+      </AppHeader>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <div>

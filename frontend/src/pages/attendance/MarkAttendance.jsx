@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { format, isFuture, parseISO } from 'date-fns';
 import { 
   Calendar, CheckCircle, XCircle, Clock, AlertCircle, 
-  Save, Loader2, Users, ArrowLeft, Info
+  Save, Loader2, Users, Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAttendanceStore from '../../store/attendanceStore';
@@ -12,7 +12,9 @@ import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
 import axios from '../../lib/axios';
 import DataTable from '../../components/common/DataTable';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const MarkAttendance = () => {
@@ -278,31 +280,19 @@ const MarkAttendance = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/dashboard" className="text-gray-500 hover:text-gray-700 text-sm font-medium shrink-0">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-300">|</span>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
-              <p className="text-xs text-gray-500">Mark Attendance</p>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Mark attendance"
+        />
+      </AppHeader>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-4 mb-2">
-          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Mark Attendance</h2>
-            <p className="text-gray-500 text-sm mt-0.5">Record daily attendance for students</p>
-          </div>
+        <div className="mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Mark Attendance</h2>
+          <p className="text-gray-500 text-sm mt-0.5">Record daily attendance for students</p>
         </div>
 
         {/* Filters Card */}

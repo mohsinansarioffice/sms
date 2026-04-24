@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const ComposeMessage = () => {
   const navigate = useNavigate();
@@ -65,20 +67,14 @@ const ComposeMessage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button
-              type="button"
-              onClick={() => navigate(messagesHome)}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo={messagesHome}
+          backLabel="Back to messages"
+          title={user?.schoolName || 'School'}
+          subtitle="Compose message"
+        />
+      </AppHeader>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Compose message</h1>

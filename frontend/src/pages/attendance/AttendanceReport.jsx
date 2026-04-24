@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { format, subDays, parseISO } from 'date-fns';
 import { 
-  FileText, Calendar, Filter, Loader2, ArrowLeft, Download, Printer, User
+  FileText, Calendar, Filter, Loader2, Download, Printer, User
 } from 'lucide-react';
 import useAttendanceStore from '../../store/attendanceStore';
 import useAuthStore from '../../store/authStore';
 import DataTable from '../../components/common/DataTable';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const AttendanceReport = () => {
@@ -126,31 +127,19 @@ const AttendanceReport = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/dashboard" className="text-gray-500 hover:text-gray-700 text-sm font-medium shrink-0">
-              ← Dashboard
-            </Link>
-            <span className="text-gray-300">|</span>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
-              <p className="text-xs text-gray-500">Attendance Reports</p>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Attendance reports"
+        />
+      </AppHeader>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-4 mb-2">
-          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Attendance Report</h2>
-            <p className="text-gray-500 text-sm mt-0.5">Generate and analyze student attendance data</p>
-          </div>
+        <div className="mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Attendance Report</h2>
+          <p className="text-gray-500 text-sm mt-0.5">Generate and analyze student attendance data</p>
         </div>
 
         {/* Configuration Card */}

@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import useDiaryStore from '../../store/diaryStore';
 import useAcademicStore from '../../store/academicStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const DiaryForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { id } = useParams();
   const isEdit = Boolean(id);
 
@@ -117,20 +121,14 @@ const DiaryForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/dashboard" />
-            <button type="button" onClick={() => navigate('/diary')} className="btn-secondary flex items-center gap-2 shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary-600" />
-              {isEdit ? 'Edit Diary Entry' : 'New Diary Entry'}
-            </h1>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/diary"
+          backLabel="Back to diary"
+          title={user?.schoolName || 'School'}
+          subtitle={isEdit ? 'Edit diary entry' : 'New diary entry'}
+        />
+      </AppHeader>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="card space-y-5">

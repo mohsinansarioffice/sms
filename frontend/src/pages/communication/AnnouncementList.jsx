@@ -1,16 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Megaphone, Plus, Search, Loader2, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
 import { PriorityBadge, AudienceLabel } from './priorityBadges';
-import NavbarAlertsLink from '../../components/NavbarAlertsLink';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const AnnouncementList = () => {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
   const {
     announcements,
@@ -58,30 +58,23 @@ const AnnouncementList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button type="button" onClick={() => navigate(homePath)} className="btn-secondary flex items-center gap-2 shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Dashboard
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Megaphone className="w-6 h-6 text-primary-600" />
-              Announcements
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <NavbarAlertsLink />
-            {canPost && (
-              <Link to="/announcements/new" className="btn-primary flex items-center gap-2">
-                <Plus className="w-4 h-4" /> New
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo={homePath}
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Announcements"
+        />
+      </AppHeader>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        {canPost ? (
+          <div className="flex justify-end">
+            <Link to="/announcements/new" className="btn-primary inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" /> New
+            </Link>
+          </div>
+        ) : null}
         <div className="card">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
             <div className="relative flex-1">

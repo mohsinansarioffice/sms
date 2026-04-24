@@ -3,8 +3,17 @@ import { Link } from 'react-router-dom';
 import { Bell, Megaphone, Mail, ChevronRight, Loader2 } from 'lucide-react';
 import useCommunicationStore from '../store/communicationStore';
 import { useSchoolPlanFeatures } from '../hooks/useSchoolPlanFeatures';
+import {
+  APP_HEADER_TOOLBAR_ICON,
+  APP_HEADER_TOOLBAR_LABEL,
+} from './layout/appHeaderToolbarClasses';
 
-const NotificationBell = () => {
+/**
+ * @param {{ toolbarButtonClassName?: string }} props
+ * When `toolbarButtonClassName` is set (from AppHeader), trigger matches toolbar icon+label style.
+ */
+const NotificationBell = ({ toolbarButtonClassName }) => {
+  const toolbar = Boolean(toolbarButtonClassName);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { feature } = useSchoolPlanFeatures();
@@ -53,8 +62,21 @@ const NotificationBell = () => {
 
   if (communicationOn === null) {
     return (
-      <div className="relative p-2 rounded-lg text-gray-400" aria-hidden title="Loading plan…">
-        <Loader2 className="w-5 h-5 animate-spin" />
+      <div
+        className={
+          toolbar
+            ? `${toolbarButtonClassName} cursor-wait text-gray-400 opacity-90`
+            : "relative p-2 rounded-lg text-gray-400"
+        }
+        aria-hidden
+        title="Loading plan…"
+      >
+        <Loader2 className={`${toolbar ? APP_HEADER_TOOLBAR_ICON : "w-5 h-5 shrink-0"} animate-spin`} />
+        {toolbar ? (
+          <span className={`${APP_HEADER_TOOLBAR_LABEL} text-gray-600`}>
+            Notifications
+          </span>
+        ) : null}
       </div>
     );
   }
@@ -65,11 +87,18 @@ const NotificationBell = () => {
         <button
           type="button"
           disabled
-          className="relative p-2 rounded-lg text-gray-400 cursor-not-allowed opacity-60"
+          className={
+            toolbar
+              ? `${toolbarButtonClassName} cursor-not-allowed text-gray-400 opacity-70 hover:bg-white`
+              : "relative p-2 rounded-lg text-gray-400 cursor-not-allowed opacity-60"
+          }
           title="Announcements and messages are not on your current plan. Open Settings → Plans to upgrade."
           aria-label="Notifications not available on plan"
         >
-          <Bell className="w-5 h-5" />
+          <Bell className={toolbar ? APP_HEADER_TOOLBAR_ICON : "w-5 h-5 shrink-0"} />
+          {toolbar ? (
+            <span className={APP_HEADER_TOOLBAR_LABEL}>Notifications</span>
+          ) : null}
         </button>
       </div>
     );
@@ -80,10 +109,18 @@ const NotificationBell = () => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className={
+          toolbar
+            ? `${toolbarButtonClassName} relative`
+            : "relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        }
         aria-label="Notifications"
+        title="Notifications"
       >
-        <Bell className="w-5 h-5 text-gray-700" />
+        <Bell className={`${toolbar ? APP_HEADER_TOOLBAR_ICON : "w-5 h-5 shrink-0"} text-gray-700`} />
+        {toolbar ? (
+          <span className={APP_HEADER_TOOLBAR_LABEL}>Notifications</span>
+        ) : null}
         {totalUnread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
             {totalUnread > 99 ? '99+' : totalUnread}

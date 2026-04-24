@@ -1,12 +1,14 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
-import { ArrowLeft, Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAcademicStore from '../../store/academicStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const AnnouncementForm = () => {
   const { id } = useParams();
@@ -166,20 +168,14 @@ const AnnouncementForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo="/announcements"
+          backLabel="Back to announcements"
+          title={user?.schoolName || 'School'}
+          subtitle={isEdit ? 'Edit announcement' : 'New announcement'}
+        />
+      </AppHeader>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">

@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { Loader2, Trash2, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const MessageDetail = () => {
   const { id } = useParams();
@@ -73,27 +75,23 @@ const MessageDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button
-              type="button"
-              onClick={() => navigate('/messages')}
-              className="btn-secondary flex items-center gap-2 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="btn-secondary text-red-700 flex items-center gap-2"
-          >
-            <Trash2 className="w-4 h-4" /> Delete
-          </button>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo="/messages"
+          backLabel="Back to messages"
+          title={user?.schoolName || 'School'}
+          subtitle="Message"
+        />
+      </AppHeader>
+      <div className="max-w-3xl mx-auto px-4 pt-2 flex justify-end">
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="btn-secondary text-red-700 flex items-center gap-2"
+        >
+          <Trash2 className="w-4 h-4" /> Delete
+        </button>
+      </div>
 
       <article className="max-w-3xl mx-auto px-4 py-8">
         <div className="card space-y-4">

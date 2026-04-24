@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Users } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAcademicStore from '../../store/academicStore';
 import useStudentStore from '../../store/studentStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const PromoteStudents = () => {
+  const { user } = useAuthStore();
   const { classes, sections, academicYears, fetchClasses, fetchSections, fetchAcademicYears } = useAcademicStore();
   const { students, fetchStudents, promoteStudents, isLoading } = useStudentStore();
 
@@ -68,17 +71,14 @@ const PromoteStudents = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 min-w-0">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/students" className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-2 text-sm sm:text-base min-w-0 max-w-full">
-              <ArrowLeft className="w-5 h-5 shrink-0" />
-              <span className="truncate">Back to Students</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/students"
+          backLabel="Back to students"
+          title="Promote students"
+          subtitle={user?.schoolName || undefined}
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="card mb-6">

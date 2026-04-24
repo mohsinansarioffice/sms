@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, ChevronDown, BookOpen, Mail } from "lucide-react";
+import { Loader2, ChevronDown, BookOpen } from "lucide-react";
 import { format } from "date-fns";
 import useAuthStore from "../../store/authStore";
-import LogoutButton from "../../components/common/LogoutButton";
-import BrandLogo from "../../components/common/BrandLogo";
+import AppHeader from "../../components/layout/AppHeader";
 import useParentStore from "../../store/parentStore";
 import useDiaryStore from "../../store/diaryStore";
 
@@ -46,18 +45,16 @@ const ParentDashboard = () => {
   if (!children.length) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-              <BrandLogo linkTo="/parent/dashboard" className="mt-0.5" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Parent Portal</h1>
-                <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
-              </div>
-            </div>
-            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
-          </div>
-        </nav>
+        <AppHeader logoHref="/parent/dashboard">
+          <>
+            <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
+              Parent Portal
+            </h1>
+            <p className="text-sm text-gray-600 mt-1 lg:mt-0.5">
+              Welcome, {user?.name}
+            </p>
+          </>
+        </AppHeader>
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="card text-center text-gray-600">
             No student is linked to your account yet. Please contact the school
@@ -91,45 +88,38 @@ const ParentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <BrandLogo linkTo="/parent/dashboard" className="mt-0.5" />
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900">Parent Portal</h1>
-              <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
+      <AppHeader
+        logoHref="/parent/dashboard"
+        centerFooter={
+          children.length > 1 ? (
+            <div className="relative inline-flex items-center max-w-full">
+              <select
+                className="input-field py-2 pr-8 pl-3 text-sm font-medium min-w-[200px] max-w-full appearance-none cursor-pointer"
+                value={selectedStudentId || ""}
+                onChange={(e) => selectChildAndRefresh(e.target.value)}
+                aria-label="Select child"
+              >
+                {children.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                    {c.admissionNumber ? ` (${c.admissionNumber})` : ""}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2 pointer-events-none" />
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {children.length > 1 ? (
-              <div className="relative inline-flex items-center">
-                <select
-                  className="input-field py-2 pr-8 pl-3 text-sm font-medium min-w-[200px] appearance-none cursor-pointer"
-                  value={selectedStudentId || ""}
-                  onChange={(e) => selectChildAndRefresh(e.target.value)}
-                  aria-label="Select child"
-                >
-                  {children.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                      {c.admissionNumber ? ` (${c.admissionNumber})` : ""}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2 pointer-events-none" />
-              </div>
-            ) : null}
-            <Link
-              to="/messages"
-              className="btn-secondary inline-flex items-center gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              Messages
-            </Link>
-            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
-          </div>
-        </div>
-      </nav>
+          ) : null
+        }
+      >
+        <>
+          <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
+            Parent Portal
+          </h1>
+          <p className="text-sm text-gray-600 mt-1 lg:mt-0.5">
+            Welcome, {user?.name}
+          </p>
+        </>
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
         <div className="card">

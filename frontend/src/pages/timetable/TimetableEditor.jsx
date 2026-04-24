@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Copy, Loader2, Save, Settings2, X } from 'lucide-react';
+import { Copy, Loader2, Save, Settings2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
 import useTimetableStore from '../../store/timetableStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 import axios from '../../lib/axios';
 
 const DAY_OPTIONS = [
@@ -218,18 +220,14 @@ const TimetableEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3 sm:gap-4 min-w-0">
-          <BrandLogo linkTo="/dashboard" />
-          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
-            <p className="text-xs text-gray-500">Timetable Editor</p>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Timetable editor"
+        />
+      </AppHeader>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         <div className="card">

@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ArrowLeft, Megaphone, Mail, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, Megaphone, Mail, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import { PriorityBadge } from './priorityBadges';
 import { useSchoolPlanFeatures } from '../../hooks/useSchoolPlanFeatures';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const NotificationCenter = () => {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
   const homePath =
     user?.role === 'parent'
@@ -67,21 +68,14 @@ const NotificationCenter = () => {
   if (!comm) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button
-              type="button"
-              onClick={() => navigate(homePath)}
-              className="btn-secondary flex items-center gap-2 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" /> Dashboard
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex min-w-0 items-center gap-2">
-              <Bell className="w-6 h-6 text-primary-600 shrink-0" /> <span className="truncate">Notification center</span>
-            </h1>
-          </div>
-        </nav>
+        <AppHeader logoHref={homePath}>
+          <AppPageHeaderContext
+            backTo={homePath}
+            backLabel="Back to dashboard"
+            title={user?.schoolName || 'School'}
+            subtitle="Notification center"
+          />
+        </AppHeader>
         <div className="max-w-lg mx-auto px-4 py-16">
           <div className="card text-center space-y-4">
             <p className="text-gray-800 font-medium">Announcements and messages are not on your current plan.</p>
@@ -105,17 +99,14 @@ const NotificationCenter = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-          <BrandLogo linkTo={homePath} />
-          <button type="button" onClick={() => navigate(homePath)} className="btn-secondary flex items-center gap-2 shrink-0">
-            <ArrowLeft className="w-4 h-4" /> Dashboard
-          </button>
-          <h1 className="text-xl font-bold text-gray-900 flex min-w-0 items-center gap-2">
-            <Bell className="w-6 h-6 text-primary-600 shrink-0" /> <span className="truncate">Notification center</span>
-          </h1>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo={homePath}
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Notification center"
+        />
+      </AppHeader>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         <section className="card">

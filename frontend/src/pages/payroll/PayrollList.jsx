@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useTeacherStore from '../../store/teacherStore';
 import usePayrollStore from '../../store/payrollStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const PayrollList = () => {
+  const { user } = useAuthStore();
   const { teachers, fetchTeachers } = useTeacherStore();
   const { records, totalPaid, fetchPayroll, createPayroll, isLoading } = usePayrollStore();
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
@@ -49,15 +53,14 @@ const PayrollList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3 sm:gap-4 min-w-0">
-          <BrandLogo linkTo="/dashboard" />
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </Link>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Payroll"
+        />
+      </AppHeader>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Record Monthly Salary</h2>

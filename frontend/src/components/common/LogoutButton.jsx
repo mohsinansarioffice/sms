@@ -7,6 +7,12 @@ import useAuthStore from "../../store/authStore";
 export default function LogoutButton({
   className = "btn-secondary inline-flex items-center gap-2",
   label = "Logout",
+  /** e.g. when label is `hidden` on small screens — keeps name in SR + tooltip */
+  accessibleLabel,
+  /** Classes for the label span (e.g. responsive visibility) */
+  labelClassName,
+  /** Override icon/spinner size classes */
+  iconClassName,
   /** e.g. close mobile menu before sign-out */
   onBeforeLogout,
   /** Icon + aria-label only (e.g. compact mobile bar) */
@@ -14,6 +20,7 @@ export default function LogoutButton({
 }) {
   const logout = useAuthStore((s) => s.logout);
   const isLoggingOut = useAuthStore((s) => s.isLoggingOut);
+  const iconCls = iconClassName ?? "w-5 h-5 shrink-0";
 
   return (
     <button
@@ -24,21 +31,20 @@ export default function LogoutButton({
       }}
       disabled={isLoggingOut}
       aria-busy={isLoggingOut}
-      aria-label={iconOnly ? "Log out" : undefined}
+      aria-label={accessibleLabel ?? (iconOnly ? label : undefined)}
+      title={accessibleLabel ?? label}
       className={className}
     >
       {isLoggingOut ? (
-        <Loader2
-          className={`${iconOnly ? "w-5 h-5" : "w-4 h-4"} shrink-0 animate-spin`}
-          aria-hidden
-        />
+        <Loader2 className={`${iconCls} animate-spin`} aria-hidden />
       ) : (
-        <LogOut
-          className={`${iconOnly ? "w-5 h-5" : "w-4 h-4"} shrink-0`}
-          aria-hidden
-        />
+        <LogOut className={iconCls} aria-hidden />
       )}
-      {!iconOnly ? label : null}
+      {!iconOnly ? (
+        <span className={labelClassName ?? "whitespace-nowrap"}>
+          {label}
+        </span>
+      ) : null}
     </button>
   );
 }

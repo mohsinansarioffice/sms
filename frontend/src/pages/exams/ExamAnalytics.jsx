@@ -1,12 +1,16 @@
 import React, { useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Trophy, AlertTriangle, Users, BookOpen } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Loader2, Trophy, AlertTriangle, Users, BookOpen } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import useExamStore from '../../store/examStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const ExamAnalytics = () => {
   const { id } = useParams();
+  const { user } = useAuthStore();
   const { fetchExamAnalytics, examAnalytics, isLoading } = useExamStore();
 
   useEffect(() => {
@@ -36,24 +40,21 @@ const ExamAnalytics = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/exams" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,220px)]">
-              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Exams</span>
-            </Link>
-          </div>
-          <div className="text-left sm:text-right min-w-0">
-            <h1 className="text-xl font-bold text-gray-900">{exam?.name} Analytics</h1>
-            <p className="text-sm text-gray-500">
-              {exam?.classId?.name} | {exam?.subjectId?.name}
-            </p>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/exams"
+          backLabel="Back to exams"
+          title={user?.schoolName || 'School'}
+          subtitle={exam?.name ? `${exam.name} — analytics` : 'Exam analytics'}
+        />
+      </AppHeader>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        {exam ? (
+          <p className="text-sm text-gray-600 -mt-2 mb-2">
+            {exam.classId?.name} | {exam.subjectId?.name}
+          </p>
+        ) : null}
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="card p-5 bg-white border-l-4 border-l-blue-500">

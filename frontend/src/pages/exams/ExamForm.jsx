@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useExamStore from '../../store/examStore';
 import useAcademicStore from '../../store/academicStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const ExamForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const isEditMode = !!id;
 
   const { createExam, updateExam, fetchExam, currentExam, examTypes, fetchExamTypes, isLoading } = useExamStore();
@@ -96,19 +100,14 @@ const ExamForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/exams" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,200px)]">
-              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Exams</span>
-            </Link>
-          </div>
-          <h1 className="text-base sm:text-lg font-bold text-gray-900 text-left sm:text-right w-full sm:w-auto min-w-0">
-            {isEditMode ? 'Edit Exam' : 'Create New Exam'}
-          </h1>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/exams"
+          backLabel="Back to exams"
+          title={user?.schoolName || 'School'}
+          subtitle={isEditMode ? 'Edit exam' : 'Create new exam'}
+        />
+      </AppHeader>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

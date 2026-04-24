@@ -1,12 +1,15 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useEventStore from '../../store/eventStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const EventForm = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { createEvent, isLoading } = useEventStore();
   const {
     register,
@@ -31,17 +34,14 @@ const EventForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/events" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/events"
+          backLabel="Back to calendar"
+          title="Create event"
+          subtitle={user?.schoolName || undefined}
+        />
+      </AppHeader>
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="card">
           <h2 className="text-xl font-bold text-gray-900 mb-5">Create Event</h2>

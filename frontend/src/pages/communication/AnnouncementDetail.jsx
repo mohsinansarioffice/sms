@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Loader2,
   Pencil,
   Trash2,
@@ -12,7 +11,9 @@ import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
 import { PriorityBadge, AudienceLabel } from './priorityBadges';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const AnnouncementDetail = () => {
   const { id } = useParams();
@@ -104,30 +105,24 @@ const AnnouncementDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button
-              type="button"
-              onClick={() => navigate('/announcements')}
-              className="btn-secondary flex items-center gap-2 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-          {canEdit && (
-            <div className="flex gap-2">
-              <Link to={`/announcements/${id}/edit`} className="btn-secondary flex items-center gap-2">
-                <Pencil className="w-4 h-4" /> Edit
-              </Link>
-              <button type="button" onClick={handleDelete} className="btn-secondary text-red-700 flex items-center gap-2">
-                <Trash2 className="w-4 h-4" /> Delete
-              </button>
-            </div>
-          )}
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo="/announcements"
+          backLabel="Back to announcements"
+          title={user?.schoolName || 'School'}
+          subtitle="Announcement"
+        />
+      </AppHeader>
+      {canEdit ? (
+        <div className="max-w-3xl mx-auto px-4 pt-2 flex flex-wrap justify-end gap-2">
+          <Link to={`/announcements/${id}/edit`} className="btn-secondary flex items-center gap-2">
+            <Pencil className="w-4 h-4" /> Edit
+          </Link>
+          <button type="button" onClick={handleDelete} className="btn-secondary text-red-700 flex items-center gap-2">
+            <Trash2 className="w-4 h-4" /> Delete
+          </button>
         </div>
-      </nav>
+      ) : null}
 
       <article className="max-w-3xl mx-auto px-4 py-8">
         <div className="card space-y-4">

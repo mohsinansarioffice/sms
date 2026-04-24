@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, Trash2 } from 'lucide-react';
+import { CalendarDays, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useEventStore from '../../store/eventStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const EventCalendar = () => {
   const { user } = useAuthStore();
@@ -39,29 +41,28 @@ const EventCalendar = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </Link>
-          </div>
-          {user?.role === 'admin' && (
-            <Link to="/events/new" className="btn-primary">
-              Add Event
-            </Link>
-          )}
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="School calendar"
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="card mb-6">
-          <h2 className="text-xl font-bold text-gray-900 inline-flex items-center gap-2 mb-4">
-            <CalendarDays className="w-5 h-5 text-primary-600" />
-            School Calendar
-          </h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 inline-flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-primary-600" />
+              School Calendar
+            </h2>
+            {user?.role === 'admin' && (
+              <Link to="/events/new" className="btn-primary self-start sm:self-auto">
+                Add Event
+              </Link>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <select className="input-field" value={month} onChange={(e) => setMonth(e.target.value)}>
               {Array.from({ length: 12 }, (_, i) => (

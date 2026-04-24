@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useLeaveStore from '../../store/leaveStore';
 import useAuthStore from '../../store/authStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const LeaveList = () => {
   const { user } = useAuthStore();
@@ -26,31 +27,30 @@ const LeaveList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </Link>
-          </div>
-          <Link to="/leaves/new" className="btn-primary">
-            Apply Leave
-          </Link>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Leave requests"
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">Leave Requests</h2>
-            <select className="input-field max-w-[200px]" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/leaves/new" className="btn-primary">
+                Apply Leave
+              </Link>
+              <select className="input-field max-w-[200px]" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
+            </div>
           </div>
 
           {!leaves.length ? (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Search, Filter, Eye, DollarSign, 
+  Search, Filter, Eye, DollarSign, 
   CreditCard, Calendar, Loader2, Plus 
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -9,7 +9,9 @@ import useFeeStore from '../../store/feeStore';
 import useAcademicStore from '../../store/academicStore';
 import useAuthStore from '../../store/authStore';
 import DataTable from '../../components/common/DataTable';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const StudentFeeList = () => {
@@ -133,25 +135,14 @@ const StudentFeeList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
-              <p className="text-xs text-gray-500">Student Fee Management</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Link to="/fees/assign" className="btn-primary flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Assign Fees
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/dashboard"
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Student fee management"
+        />
+      </AppHeader>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -161,6 +152,9 @@ const StudentFeeList = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
+            <Link to="/fees/assign" className="btn-primary flex items-center gap-2 shrink-0">
+              <Plus className="w-4 h-4" /> Assign Fees
+            </Link>
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
               <Filter className="w-4 h-4 text-gray-400" />
               <select 

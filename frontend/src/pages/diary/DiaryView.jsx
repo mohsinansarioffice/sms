@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen, ArrowLeft, ChevronLeft, ChevronRight, Loader2,
+  BookOpen, ChevronLeft, ChevronRight, Loader2,
   ClipboardList, BookMarked, Megaphone, MessageSquare, Calendar
 } from 'lucide-react';
 import { format, addDays, subDays, isToday, isFuture } from 'date-fns';
@@ -10,7 +9,9 @@ import useDiaryStore from '../../store/diaryStore';
 import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
 import useParentStore from '../../store/parentStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const PARENT_STUDENT_STORAGE_KEY = 'parentPortal.selectedStudentId';
 
@@ -93,6 +94,7 @@ const DiaryView = () => {
   const [sectionId, setSectionId] = useState('');
 
   const isParent = user?.role === 'parent';
+  const homePath = isParent ? '/parent/dashboard' : '/dashboard';
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
@@ -150,25 +152,14 @@ const DiaryView = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={isParent ? '/parent/dashboard' : '/dashboard'} />
-            <button
-              type="button"
-              onClick={() => navigate(isParent ? '/parent/dashboard' : '/dashboard')}
-              className="btn-secondary flex items-center gap-2 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {isParent ? 'Portal' : 'Dashboard'}
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary-600" />
-              Class Diary
-            </h1>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo={homePath}
+          backLabel={isParent ? 'Back to portal' : 'Back to dashboard'}
+          title={user?.schoolName || 'School'}
+          subtitle="Class diary"
+        />
+      </AppHeader>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
         {/* Class/Section filter — admin/teacher only */}

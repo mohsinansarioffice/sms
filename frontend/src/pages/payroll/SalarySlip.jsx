@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Loader2, Printer } from 'lucide-react';
 import usePayrollStore from '../../store/payrollStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import useAuthStore from '../../store/authStore';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const SalarySlip = () => {
   const { id } = useParams();
+  const { user } = useAuthStore();
   const { salarySlip, fetchSalarySlip, isLoading } = usePayrollStore();
 
   useEffect(() => {
@@ -22,21 +26,24 @@ const SalarySlip = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
-      <nav className="bg-white border-b shadow-sm print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/payroll" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </Link>
-          </div>
-          <button className="btn-secondary inline-flex items-center gap-2" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" />
-            Print
-          </button>
-        </div>
-      </nav>
+      <AppHeader className="print:hidden" logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/payroll"
+          backLabel="Back to payroll"
+          title={user?.schoolName || 'School'}
+          subtitle="Salary slip"
+        />
+      </AppHeader>
+      <div className="print:hidden max-w-4xl mx-auto px-4 pt-2 pb-4 flex justify-end">
+        <button
+          type="button"
+          className="btn-secondary inline-flex items-center gap-2"
+          onClick={() => window.print()}
+        >
+          <Printer className="w-4 h-4" />
+          Print
+        </button>
+      </div>
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white border rounded-xl p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Salary Slip</h1>

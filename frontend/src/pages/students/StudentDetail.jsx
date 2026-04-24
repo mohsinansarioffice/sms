@@ -26,8 +26,9 @@ import useAttendanceStore from "../../store/attendanceStore";
 import useFeeStore from "../../store/feeStore";
 import useAuthStore from "../../store/authStore";
 import axios from "../../lib/axios";
-import LogoutButton from "../../components/common/LogoutButton";
-import BrandLogo from "../../components/common/BrandLogo";
+import AppHeader, {
+  AppPageHeaderContext,
+} from "../../components/layout/AppHeader";
 
 // ── Info row helper ────────────────────────────────────────────────────────────
 const InfoRow = ({ label, value }) => (
@@ -462,28 +463,14 @@ const StudentDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Nav ── */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <BrandLogo linkTo="/dashboard" />
-            <Link
-              to="/dashboard"
-              className="text-gray-500 hover:text-gray-700 text-sm font-medium shrink-0"
-            >
-              ← Dashboard
-            </Link>
-            <span className="text-gray-300">|</span>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {user?.schoolName}
-              </h1>
-              <p className="text-xs text-gray-500">Student Profile</p>
-            </div>
-          </div>
-          <LogoutButton className="btn-secondary flex items-center gap-2" />
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/students"
+          backLabel="Back to students"
+          title={user?.schoolName || "School"}
+          subtitle="Student profile"
+        />
+      </AppHeader>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {/* ── Page header ── */}

@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Building2, Search, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Building2, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { createColumnHelper } from "@tanstack/react-table";
 import useSuperAdminStore from "../../store/superAdminStore";
 import ToggleSwitch from "../../components/superadmin/ToggleSwitch";
-import LogoutButton from "../../components/common/LogoutButton";
 import DataTable from "../../components/common/DataTable";
-import BrandLogo from "../../components/common/BrandLogo";
+import AppHeader, {
+  AppPageHeaderContext,
+} from "../../components/layout/AppHeader";
 
 const planBadge = (plan) => {
   const colors = {
@@ -25,7 +26,6 @@ const planBadge = (plan) => {
 };
 
 const SchoolList = () => {
-  const navigate = useNavigate();
   const {
     schools,
     total,
@@ -140,24 +140,14 @@ const SchoolList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/superadmin/dashboard" />
-            <button
-              type="button"
-              onClick={() => navigate("/superadmin/dashboard")}
-              className="btn-secondary flex items-center gap-2 shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4" /> Overview
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-primary-600" /> Schools
-            </h1>
-          </div>
-          <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
-        </div>
-      </nav>
+      <AppHeader logoHref="/superadmin/dashboard">
+        <AppPageHeaderContext
+          backTo="/superadmin/dashboard"
+          backLabel="Back to overview"
+          title="Schools"
+          subtitle="Manage all schools"
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-4">
         <form onSubmit={submitSearch} className="flex flex-wrap gap-2">

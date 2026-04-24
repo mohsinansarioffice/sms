@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Trophy, Award, BookOpen, FileText } from 'lucide-react';
+import { Loader2, Trophy, Award, BookOpen, FileText } from 'lucide-react';
 import useExamStore from '../../store/examStore';
 import { format } from 'date-fns';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const StudentResults = () => {
   const { studentId } = useParams();
@@ -25,29 +27,26 @@ const StudentResults = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to={`/students/${studentId}`} className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,200px)]">
-              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Profile</span>
-            </Link>
-          </div>
-          <div className="text-left sm:text-right flex flex-wrap items-center gap-3 sm:gap-4 justify-end">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{student.name}</h1>
-              <p className="text-sm text-gray-500">Adm No: {student.admissionNumber}</p>
-            </div>
-            <Link to={`/students/${studentId}/report-card`} className="btn-secondary inline-flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Report Card
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo={`/students/${studentId}`}
+          backLabel="Back to student profile"
+          title={student.name}
+          subtitle={`Admission ${student.admissionNumber}`}
+        />
+      </AppHeader>
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        
+        <div className="flex justify-end">
+          <Link
+            to={`/students/${studentId}/report-card`}
+            className="btn-secondary inline-flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Report Card
+          </Link>
+        </div>
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="card p-5 bg-white flex flex-col justify-center border-l-4 border-l-blue-500">

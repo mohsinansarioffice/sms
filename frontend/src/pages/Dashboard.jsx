@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users,
   GraduationCap,
@@ -16,11 +16,8 @@ import {
   Megaphone,
   Mail,
   NotebookPen,
-  Menu,
-  X,
   Circle,
   CheckCircle2,
-  ListChecks,
   Loader2,
   KeyRound,
 } from "lucide-react";
@@ -32,15 +29,15 @@ import useCommunicationStore from "../store/communicationStore";
 import useEventStore from "../store/eventStore";
 import useAcademicStore from "../store/academicStore";
 import useFeeStore from "../store/feeStore";
-import NotificationBell from "../components/NotificationBell";
-import NavbarAlertsLink from "../components/NavbarAlertsLink";
-import LogoutButton from "../components/common/LogoutButton";
+import AppHeader, {
+  OPEN_SETUP_GUIDE_EVENT,
+  PLAN_BADGE_CLASS,
+} from "../components/layout/AppHeader";
 import {
   shouldShowBillingReminder,
   daysUntilDueDate,
   billingReminderTone,
 } from "../lib/billingReminder";
-import BrandLogo from "../components/common/BrandLogo";
 
 /** When usage is still loading, features are treated as enabled to avoid flicker. */
 function usePlanFeatures(usage) {
@@ -48,12 +45,6 @@ function usePlanFeatures(usage) {
   return (key) => (f == null ? true : !!f[key]);
 }
 
-/** Matches settings/Plans.jsx PLAN_COLORS for consistent plan badges. */
-const PLAN_BADGE_CLASS = {
-  free: "bg-gray-100 text-gray-700 ring-gray-200",
-  basic: "bg-primary-100 text-primary-700 ring-primary-200",
-  premium: "bg-yellow-100 text-yellow-700 ring-yellow-300",
-};
 const ONBOARDING_DISMISS_KEY = "sms_onboarding_dismissed";
 
 function GatedLink({
@@ -233,6 +224,7 @@ function GettingStartedChecklist({ steps, onDismiss, onClose, forceShow }) {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuthStore();
   const { total: studentTotal, fetchStudents } = useStudentStore();
   const { total: teacherTotal, fetchTeachers } = useTeacherStore();
@@ -252,7 +244,6 @@ const Dashboard = () => {
 
   const [dismissPendingPay, setDismissPendingPay] = useState(false);
   const [dismissBillingRem, setDismissBillingRem] = useState(false);
-  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [dismissOnboarding, setDismissOnboarding] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(ONBOARDING_DISMISS_KEY) === "1";
@@ -261,6 +252,20 @@ const Dashboard = () => {
   const [onboardingDataReady, setOnboardingDataReady] = useState(false);
   /** Admin clicked "Setup guide" to review progress (including when all steps are done). */
   const [setupGuideOpen, setSetupGuideOpen] = useState(false);
+
+  useEffect(() => {
+    const onOpen = () => setSetupGuideOpen(true);
+    window.addEventListener(OPEN_SETUP_GUIDE_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_SETUP_GUIDE_EVENT, onOpen);
+  }, []);
+
+  useEffect(() => {
+    if (searchParams.get("setupGuide") !== "1") return;
+    setSetupGuideOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("setupGuide");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const feat = usePlanFeatures(usage);
   const isAdmin = user?.role === "admin";
@@ -343,15 +348,6 @@ const Dashboard = () => {
     });
   }, [usage, fetchEvents]);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const onChange = () => {
-      if (mq.matches) setNavMenuOpen(false);
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
   const studentLimit = usage?.usage?.students?.limit;
   const teacherLimit = usage?.usage?.teachers?.limit;
   const studentPct = usage?.usage?.students?.percentage ?? 0;
@@ -403,152 +399,50 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Nav ── */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1 flex items-start gap-3 sm:gap-4">
-              <BrandLogo linkTo="/dashboard" className="mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h1
-                  className="text-lg sm:text-xl font-bold text-gray-900 min-w-0 truncate"
-                  title={user?.schoolName || ""}
-                >
-                  {user?.schoolName}
-                </h1>
-                {isAdmin ? (
-                  <Link
-                    to="/settings/plans"
-                    title="View subscription plans"
-                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
-                      PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
-                    }`}
-                  >
-                    {planDisplayName}
-                  </Link>
-                ) : (
-                  <span
-                    title="Current plan"
-                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${
-                      PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
-                    }`}
-                  >
-                    {planDisplayName}
-                  </span>
-                )}
-                </div>
-                <p
-                  className="text-sm text-gray-600 truncate mt-0.5"
-                  title={
-                    user?.name ? `Welcome back, ${user.name}` : undefined
-                  }
-                >
-                  Welcome back, {user?.name}
-                </p>
-              </div>
-            </div>
-
-            <div className="hidden lg:flex flex-shrink-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
-              <NotificationBell />
-              <NavbarAlertsLink />
-              {(isAdmin || user?.role === "teacher") &&
-                feat("communication") && (
-                  <Link
-                    to="/announcements/new"
-                    className="btn-primary inline-flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <Megaphone className="w-4 h-4 shrink-0" /> New announcement
-                  </Link>
-                )}
-              {user?.role === "admin" && (
-                <button
-                  type="button"
-                  onClick={() => navigate("/settings/usage")}
-                  className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap"
-                >
-                  <Settings className="w-4 h-4 shrink-0" /> Settings
-                </button>
-              )}
-              <LogoutButton className="btn-secondary inline-flex items-center gap-2 whitespace-nowrap" />
-            </div>
-
-            <div className="flex lg:hidden flex-shrink-0 items-center gap-0.5">
-              <NotificationBell />
-              <button
-                type="button"
-                className="p-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-                aria-expanded={navMenuOpen}
-                aria-controls="dashboard-nav-menu"
-                aria-label={navMenuOpen ? "Close menu" : "Open menu"}
-                onClick={() => setNavMenuOpen((o) => !o)}
-              >
-                {navMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {navMenuOpen ? (
-            <div
-              id="dashboard-nav-menu"
-              className="lg:hidden mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2"
+      <AppHeader logoHref="/dashboard">
+        <>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <h1
+              className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 min-w-0 leading-snug break-words lg:truncate"
+              title={user?.schoolName || ""}
             >
-              <NavbarAlertsLink
-                className="btn-secondary flex w-full items-center justify-center gap-2 py-2.5"
-                onNavigate={() => setNavMenuOpen(false)}
-              />
-              {(isAdmin || user?.role === "teacher") &&
-                feat("communication") && (
-                  <Link
-                    to="/announcements/new"
-                    className="btn-primary flex w-full items-center justify-center gap-2 py-2.5"
-                    onClick={() => setNavMenuOpen(false)}
-                  >
-                    <Megaphone className="w-4 h-4 shrink-0" /> New announcement
-                  </Link>
-                )}
-              <div className="grid grid-cols-2 gap-2">
-                {user?.role === "admin" ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNavMenuOpen(false);
-                      navigate("/settings/usage");
-                    }}
-                    className="btn-secondary flex items-center justify-center gap-2 py-2.5"
-                  >
-                    <Settings className="w-4 h-4 shrink-0" /> Settings
-                  </button>
-                ) : (
-                  <div />
-                )}
-                <LogoutButton
-                  className="btn-secondary flex items-center justify-center gap-2 py-2.5 w-full"
-                  onBeforeLogout={() => setNavMenuOpen(false)}
-                />
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </nav>
+              {user?.schoolName}
+            </h1>
+            {isAdmin ? (
+              <Link
+                to="/settings/plans"
+                title="View subscription plans"
+                className={`inline-flex shrink-0 items-center self-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                  PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
+                }`}
+              >
+                {planDisplayName}
+              </Link>
+            ) : (
+              <span
+                title="Current plan"
+                className={`inline-flex shrink-0 items-center self-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${
+                  PLAN_BADGE_CLASS[planBadgeId] ?? PLAN_BADGE_CLASS.free
+                }`}
+              >
+                {planDisplayName}
+              </span>
+            )}
+          </div>
+          <p
+            className="text-sm text-gray-600 mt-1 lg:mt-0.5 leading-snug lg:truncate [overflow-wrap:anywhere]"
+            title={
+              user?.name ? `Welcome back, ${user.name}` : undefined
+            }
+          >
+            Welcome back, {user?.name}
+          </p>
+        </>
+      </AppHeader>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {isAdmin ? (
+        {isAdmin && (showSetupGuideLoading || showGettingStartedCard) ? (
           <div className="space-y-3">
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSetupGuideOpen(true)}
-                className="btn-secondary text-sm py-2 px-3 inline-flex items-center gap-2"
-              >
-                <ListChecks className="w-4 h-4 shrink-0" />
-                Setup guide
-              </button>
-            </div>
             {showSetupGuideLoading ? (
               <div
                 className="rounded-xl border border-primary-200 bg-primary-50/40 px-4 py-3 text-sm text-gray-700 flex items-center gap-2"
@@ -661,20 +555,22 @@ const Dashboard = () => {
         )}
 
         {/* ── Stat Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
           {/* Students */}
           <Link
             to="/students"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <Users className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-xl">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+              <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-sm text-gray-500 mb-1">Total Students</p>
-            <h3 className="text-3xl font-bold text-gray-900">{studentTotal}</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Total Students</p>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tabular-nums">
+              {studentTotal}
+            </h3>
             {studentLimit && (
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -707,16 +603,16 @@ const Dashboard = () => {
           {isAdmin && (
             <Link
               to="/teachers"
-              className="card group cursor-pointer hover:shadow-lg transition-shadow"
+              className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-50 rounded-xl">
-                  <GraduationCap className="w-6 h-6 text-green-600" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-green-50 rounded-xl">
+                  <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <p className="text-sm text-gray-500 mb-1">Total Teachers</p>
-              <h3 className="text-3xl font-bold text-gray-900">
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">Total Teachers</p>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tabular-nums">
                 {teacherTotal}
               </h3>
               {teacherLimit && (
@@ -752,16 +648,16 @@ const Dashboard = () => {
           <GatedLink
             ok={feat("attendance")}
             to="/attendance/mark"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-50 rounded-xl">
-                <CalendarCheck className="w-6 h-6 text-purple-600" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-purple-50 rounded-xl">
+                <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+              <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-sm text-gray-500 mb-1">Attendance</p>
-            <h3 className="text-3xl font-bold text-gray-900">Mark</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Attendance</p>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">Mark</h3>
             <p className="text-xs text-gray-400 mt-1">
               Record daily attendance
             </p>
@@ -771,16 +667,16 @@ const Dashboard = () => {
           <GatedLink
             ok={feat("exams")}
             to="/exams"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-indigo-50 rounded-xl">
-                <BookOpen className="w-6 h-6 text-indigo-600" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-indigo-50 rounded-xl">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+              <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-sm text-gray-500 mb-1">Exams & Results</p>
-            <h3 className="text-3xl font-bold text-gray-900">Manage</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Exams & Results</p>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">Manage</h3>
             <p className="text-xs text-gray-400 mt-1">Assessments and marks</p>
           </GatedLink>
 
@@ -788,16 +684,16 @@ const Dashboard = () => {
             <GatedLink
               ok={feat("fees")}
               to="/fees/students"
-              className="card group cursor-pointer hover:shadow-lg transition-shadow"
+              className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-50 rounded-xl">
-                  <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-green-50 rounded-xl">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-green-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <p className="text-sm text-gray-500 mb-1">Fee Management</p>
-              <h3 className="text-3xl font-bold text-gray-900 leading-none">
+              <p className="text-xs sm:text-sm text-gray-500 mb-1">Fee Management</p>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-none">
                 Collect
               </h3>
               <p className="text-xs text-gray-400 mt-1">Payments & Defaulters</p>
@@ -808,16 +704,16 @@ const Dashboard = () => {
           <GatedLink
             ok={feat("diary")}
             to="/diary"
-            className="card group cursor-pointer hover:shadow-lg transition-shadow"
+            className="card group cursor-pointer hover:shadow-lg transition-shadow p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-teal-50 rounded-xl">
-                <NotebookPen className="w-6 h-6 text-teal-600" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-teal-50 rounded-xl">
+                <NotebookPen className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
+              <ArrowRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
             </div>
-            <p className="text-sm text-gray-500 mb-1">Class Diary</p>
-            <h3 className="text-3xl font-bold text-gray-900">Log</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Class Diary</p>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">Log</h3>
             <p className="text-xs text-gray-400 mt-1">Homework & notices</p>
           </GatedLink>
         </div>

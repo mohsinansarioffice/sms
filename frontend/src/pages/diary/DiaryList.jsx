@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Loader2, ArrowLeft, Pencil, Trash2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Plus, Loader2, Pencil, Trash2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import useDiaryStore from '../../store/diaryStore';
 import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const TYPE_LABELS = {
   homework: { label: 'Homework', color: 'bg-blue-100 text-blue-800' },
@@ -97,27 +99,21 @@ const DiaryList = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo={homePath} />
-            <button type="button" onClick={() => navigate(homePath)} className="btn-secondary flex items-center gap-2 shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Dashboard
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary-600" />
-              Class Diary
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/diary/new" className="btn-primary flex items-center gap-2">
-              <Plus className="w-4 h-4" /> New Entry
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref={homePath}>
+        <AppPageHeaderContext
+          backTo={homePath}
+          backLabel="Back to dashboard"
+          title={user?.schoolName || 'School'}
+          subtitle="Class diary"
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+        <div className="flex justify-end">
+          <Link to="/diary/new" className="btn-primary inline-flex items-center gap-2 shrink-0">
+            <Plus className="w-4 h-4" /> New Entry
+          </Link>
+        </div>
         {/* Filters */}
         <div className="card">
           <div className="flex items-center gap-2 mb-4">

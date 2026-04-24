@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Copy, KeyRound, Loader2, X } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Copy, KeyRound, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
 import ToggleSwitch from '../../components/superadmin/ToggleSwitch';
-import LogoutButton from '../../components/common/LogoutButton';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const FEATURE_LABELS = {
   attendance: 'Attendance',
@@ -26,7 +27,6 @@ const FEATURE_LABELS = {
 
 const SchoolDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const {
     schoolDetail,
     fetchSchool,
@@ -218,17 +218,14 @@ const SchoolDetail = () => {
         </div>
       ) : null}
 
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/superadmin/dashboard" />
-            <button type="button" onClick={() => navigate('/superadmin/schools')} className="btn-secondary flex items-center gap-2 shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-          <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
-        </div>
-      </nav>
+      <AppHeader logoHref="/superadmin/dashboard">
+        <AppPageHeaderContext
+          backTo="/superadmin/schools"
+          backLabel="Back to schools"
+          title={school.name}
+          subtitle="School detail"
+        />
+      </AppHeader>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="card">

@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Save, Loader2, Users, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useExamStore from '../../store/examStore';
+import useAuthStore from '../../store/authStore';
 import axios from '../../lib/axios';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader, {
+  AppPageHeaderContext,
+} from '../../components/layout/AppHeader';
 
 const ExamResults = () => {
   const { id } = useParams();
+  const { user } = useAuthStore();
   const { fetchExamResults, enterMarks, currentExam, examResults, isLoading } = useExamStore();
   
   const [students, setStudents] = useState([]);
@@ -92,26 +96,24 @@ const ExamResults = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <BrandLogo linkTo="/dashboard" />
-            <Link to="/exams" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,220px)]">
-              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Exams</span>
-            </Link>
-          </div>
-          <div className="text-left sm:text-right min-w-0 max-w-full sm:max-w-[55%]">
-            <h1 className="text-lg font-bold text-gray-900">{currentExam?.name || 'Enter Marks'}</h1>
-            {currentExam && (
-              <p className="text-xs text-gray-500">
-                {currentExam.classId?.name} {currentExam.sectionId ? `- ${currentExam.sectionId.name}` : ''} | {currentExam.subjectId?.name} | Max: {currentExam.totalMarks} | Pass: {currentExam.passingMarks}
-              </p>
-            )}
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/dashboard">
+        <AppPageHeaderContext
+          backTo="/exams"
+          backLabel="Back to exams"
+          title={user?.schoolName || 'School'}
+          subtitle={currentExam?.name || 'Enter marks'}
+        />
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {currentExam ? (
+          <p className="text-sm text-gray-600 mb-4">
+            {currentExam.classId?.name}{' '}
+            {currentExam.sectionId ? `— ${currentExam.sectionId.name}` : ''} |{' '}
+            {currentExam.subjectId?.name} | Max: {currentExam.totalMarks} | Pass:{' '}
+            {currentExam.passingMarks}
+          </p>
+        ) : null}
         <div className="card p-0 overflow-hidden shadow-sm">
           {isStudentsLoading || isLoading ? (
             <div className="p-12 text-center">

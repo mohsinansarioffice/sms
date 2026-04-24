@@ -7,13 +7,11 @@ import {
   DollarSign,
   PieChart,
   Loader2,
-  ArrowRight,
   AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
-import LogoutButton from '../../components/common/LogoutButton';
-import BrandLogo from '../../components/common/BrandLogo';
+import AppHeader from '../../components/layout/AppHeader';
 
 const SuperAdminDashboard = () => {
   const { overview, fetchOverview, fetchPaymentAlerts, paymentAlerts, isLoading, error, clearError } =
@@ -48,23 +46,14 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <BrandLogo linkTo="/superadmin/dashboard" className="mt-0.5" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Platform overview</h1>
-              <p className="text-sm text-gray-500">All schools</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/superadmin/schools" className="btn-primary inline-flex items-center gap-2">
-              Manage schools <ArrowRight className="w-4 h-4" />
-            </Link>
-            <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
-          </div>
-        </div>
-      </nav>
+      <AppHeader logoHref="/superadmin/dashboard">
+        <>
+          <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
+            Platform overview
+          </h1>
+          <p className="text-sm text-gray-600 mt-1 lg:mt-0.5">All schools</p>
+        </>
+      </AppHeader>
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {hasPaymentAttention && (
