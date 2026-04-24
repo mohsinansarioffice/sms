@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useEventStore from '../../store/eventStore';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const EventCalendar = () => {
   const { user } = useAuthStore();
@@ -39,11 +40,14 @@ const EventCalendar = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700">
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </Link>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </Link>
+          </div>
           {user?.role === 'admin' && (
             <Link to="/events/new" className="btn-primary">
               Add Event

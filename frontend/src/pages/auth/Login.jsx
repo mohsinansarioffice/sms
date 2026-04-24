@@ -1,28 +1,27 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import useAuthStore from '../../store/authStore';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import useAuthStore from "../../store/authStore";
+import BrandLogo from "../../components/common/BrandLogo";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError, user } = useAuthStore();
-  const [loginError, setLoginError] = useState('');
+  const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  
 
-  
-  const { 
-    register, 
-    handleSubmit, 
-    formState: { errors } 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
   } = useForm();
-  
+
   if (user) {
-    if (user.role === 'superadmin') {
+    if (user.role === "superadmin") {
       return <Navigate to="/superadmin/dashboard" replace />;
     }
-    if (user.role === 'student') {
+    if (user.role === "student") {
       return <Navigate to="/student/dashboard" replace />;
     }
     return <Navigate to="/dashboard" replace />;
@@ -30,17 +29,18 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     clearError();
-    setLoginError('');
-    
+    setLoginError("");
+
     const result = await login(data.email, data.password);
-    
+
     if (result.success) {
       const u = useAuthStore.getState().user;
-      const destination = u?.role === 'superadmin'
-        ? '/superadmin/dashboard'
-        : u?.role === 'student'
-          ? '/student/dashboard'
-          : '/dashboard';
+      const destination =
+        u?.role === "superadmin"
+          ? "/superadmin/dashboard"
+          : u?.role === "student"
+            ? "/student/dashboard"
+            : "/dashboard";
       navigate(destination);
     } else {
       setLoginError(result.error);
@@ -52,15 +52,19 @@ const Login = () => {
       <div className="relative z-10 max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
-            <span className="text-2xl font-bold text-white">SMS</span>
+          <div className="mb-5 flex justify-center">
+            <BrandLogo variant="auth" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your school account</p>
         </div>
 
         {/* Form Card */}
         <div className="card">
+          <h1 class="text-2xl font-bold text-gray-900 text-center">
+            Welcome Back
+          </h1>
+          <p class="text-gray-600 mb-3 text-center">
+            Sign in to your school account
+          </p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Error Alert */}
             {(loginError || error) && (
@@ -79,19 +83,21 @@ const Login = () => {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="email"
-                  className={`input-field pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                  className={`input-field pl-10 ${errors.email ? "border-red-500" : ""}`}
                   placeholder="admin@school.com"
-                  {...register('email', { 
-                    required: 'Email is required',
+                  {...register("email", {
+                    required: "Email is required",
                     pattern: {
                       value: /^\S+@\S+\.\S+$/,
-                      message: 'Invalid email address'
-                    }
+                      message: "Invalid email address",
+                    },
                   })}
                 />
               </div>
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -103,22 +109,22 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  className={`input-field pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                  type={showPassword ? "text" : "password"}
+                  className={`input-field pl-10 pr-10 ${errors.password ? "border-red-500" : ""}`}
                   placeholder="••••••••"
-                  {...register('password', { 
-                    required: 'Password is required',
+                  {...register("password", {
+                    required: "Password is required",
                     minLength: {
                       value: 6,
-                      message: 'Password must be at least 6 characters'
-                    }
+                      message: "Password must be at least 6 characters",
+                    },
                   })}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
                 >
                   {showPassword ? (
@@ -129,7 +135,9 @@ const Login = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -145,7 +153,7 @@ const Login = () => {
                   Signing in...
                 </>
               ) : (
-                'Sign In'
+                "Sign In"
               )}
             </button>
           </form>
@@ -153,8 +161,11 @@ const Login = () => {
           {/* Register Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-primary-600 hover:text-primary-700 font-medium"
+              >
                 Register your school
               </Link>
             </p>

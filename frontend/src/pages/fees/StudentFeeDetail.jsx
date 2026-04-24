@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import useFeeStore from '../../store/feeStore';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const StudentFeeDetail = () => {
   const { studentId } = useParams();
@@ -106,15 +107,16 @@ const StudentFeeDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <BrandLogo linkTo="/dashboard" />
             <Link
               to="/fees/students"
-              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
               <p className="text-xs text-gray-500">Student fee details</p>
             </div>

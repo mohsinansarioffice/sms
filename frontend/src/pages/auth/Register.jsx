@@ -1,24 +1,40 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Building2, User, Mail, Lock, Phone, AlertCircle, Loader2, Check } from 'lucide-react';
-import useAuthStore from '../../store/authStore';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import {
+  Building2,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  AlertCircle,
+  Loader2,
+  Check,
+} from "lucide-react";
+import useAuthStore from "../../store/authStore";
+import BrandLogo from "../../components/common/BrandLogo";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register: registerUser, isLoading, error, clearError, user } = useAuthStore();
-  const [registerError, setRegisterError] = useState('');
+  const {
+    register: registerUser,
+    isLoading,
+    error,
+    clearError,
+    user,
+  } = useAuthStore();
+  const [registerError, setRegisterError] = useState("");
 
-  const [selectedPlan, setSelectedPlan] = useState('free');
-  
-  const { 
-    register, 
-    handleSubmit, 
+  const [selectedPlan, setSelectedPlan] = useState("free");
+
+  const {
+    register,
+    handleSubmit,
     watch,
-    formState: { errors } 
+    formState: { errors },
   } = useForm();
 
-  const password = watch('password');
+  const password = watch("password");
 
   if (user) {
     return <Navigate to="/dashboard" />;
@@ -26,41 +42,41 @@ const Register = () => {
 
   const plans = [
     {
-      id: 'free',
-      name: 'Free',
-      price: '$0',
+      id: "free",
+      name: "Free",
+      price: "$0",
       features: [
-        'Up to 50 students & 3 teachers',
-        'Attendance, students, teachers & academic setup',
-        'Leave management',
+        "Up to 50 students & 3 teachers",
+        "Attendance, students, teachers & academic setup",
+        "Leave management",
       ],
     },
     {
-      id: 'basic',
-      name: 'Basic',
-      price: '$9',
+      id: "basic",
+      name: "Basic",
+      price: "$9",
       features: [
-        'Up to 200 students & 15 teachers',
-        'Everything in Free, plus fees & exams',
-        'Core academics—upgrade for messaging, calendar & more',
+        "Up to 200 students & 15 teachers",
+        "Everything in Free, plus fees & exams",
+        "Core academics—upgrade for messaging, calendar & more",
       ],
     },
     {
-      id: 'premium',
-      name: 'Premium',
-      price: '$29',
+      id: "premium",
+      name: "Premium",
+      price: "$29",
       features: [
-        'Unlimited students & teachers',
-        'Everything in Basic, plus announcements, messages & events',
-        'Timetable, class diary, exports, CSV import & payroll',
+        "Unlimited students & teachers",
+        "Everything in Basic, plus announcements, messages & events",
+        "Timetable, class diary, exports, CSV import & payroll",
       ],
     },
   ];
 
   const onSubmit = async (data) => {
     clearError();
-    setRegisterError('');
-    
+    setRegisterError("");
+
     const result = await registerUser({
       schoolName: data.schoolName,
       name: data.name,
@@ -69,9 +85,9 @@ const Register = () => {
       phone: data.phone,
       subscriptionPlan: selectedPlan,
     });
-    
+
     if (result.success) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
       setRegisterError(result.error);
     }
@@ -82,14 +98,18 @@ const Register = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
-            <span className="text-2xl font-bold text-white">SMS</span>
+          <div className="mb-5 flex justify-center">
+            <BrandLogo variant="auth" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Register Your School</h1>
-          <p className="text-gray-600 mt-2">Start managing your school efficiently</p>
         </div>
 
         <div className="card">
+          <h1 className="text-2xl font-bold text-gray-900 text-center">
+            Register Your School
+          </h1>
+          <p className="text-gray-600 mb-3 text-center">
+            Advancing schools, empowering future!
+          </p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Alert */}
             {(registerError || error) && (
@@ -111,8 +131,8 @@ const Register = () => {
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
                       selectedPlan === plan.id
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? "border-primary-600 bg-primary-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -122,11 +142,15 @@ const Register = () => {
                       )}
                     </div>
                     <p className="text-2xl font-bold text-gray-900 mb-3">
-                      {plan.price}<span className="text-sm text-gray-500">/month</span>
+                      {plan.price}
+                      <span className="text-sm text-gray-500">/month</span>
                     </p>
                     <ul className="space-y-2">
                       {plan.features.map((feature, idx) => (
-                        <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                        <li
+                          key={idx}
+                          className="text-sm text-gray-600 flex items-start gap-2"
+                        >
                           <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                           {feature}
                         </li>
@@ -137,11 +161,12 @@ const Register = () => {
               </div>
             </div>
 
-            {(selectedPlan === 'basic' || selectedPlan === 'premium') && (
+            {(selectedPlan === "basic" || selectedPlan === "premium") && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                You get a <strong>1-day</strong> trial on the selected paid plan. Payment must be confirmed by
-                your platform administrator to continue without interruption—complete payment using the method
-                they provide.
+                You get a <strong>1-day</strong> trial on the selected paid
+                plan. Payment must be confirmed by your platform administrator
+                to continue without interruption—complete payment using the
+                method they provide.
               </div>
             )}
 
@@ -155,13 +180,17 @@ const Register = () => {
                   <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    className={`input-field pl-10 ${errors.schoolName ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 ${errors.schoolName ? "border-red-500" : ""}`}
                     placeholder="Green Valley High School"
-                    {...register('schoolName', { required: 'School name is required' })}
+                    {...register("schoolName", {
+                      required: "School name is required",
+                    })}
                   />
                 </div>
                 {errors.schoolName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.schoolName.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.schoolName.message}
+                  </p>
                 )}
               </div>
 
@@ -174,13 +203,15 @@ const Register = () => {
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    className={`input-field pl-10 ${errors.name ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 ${errors.name ? "border-red-500" : ""}`}
                     placeholder="John Doe"
-                    {...register('name', { required: 'Name is required' })}
+                    {...register("name", { required: "Name is required" })}
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
@@ -193,9 +224,9 @@ const Register = () => {
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="tel"
-                    className={`input-field pl-10 ${errors.phone ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 ${errors.phone ? "border-red-500" : ""}`}
                     placeholder="+92-300-1234567"
-                    {...register('phone')}
+                    {...register("phone")}
                   />
                 </div>
               </div>
@@ -209,19 +240,21 @@ const Register = () => {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="email"
-                    className={`input-field pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 ${errors.email ? "border-red-500" : ""}`}
                     placeholder="admin@school.com"
-                    {...register('email', { 
-                      required: 'Email is required',
+                    {...register("email", {
+                      required: "Email is required",
                       pattern: {
                         value: /^\S+@\S+\.\S+$/,
-                        message: 'Invalid email address'
-                      }
+                        message: "Invalid email address",
+                      },
                     })}
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
 
@@ -234,19 +267,21 @@ const Register = () => {
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="password"
-                    className={`input-field pl-10 ${errors.password ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 ${errors.password ? "border-red-500" : ""}`}
                     placeholder="••••••••"
-                    {...register('password', { 
-                      required: 'Password is required',
+                    {...register("password", {
+                      required: "Password is required",
                       minLength: {
                         value: 6,
-                        message: 'Password must be at least 6 characters'
-                      }
+                        message: "Password must be at least 6 characters",
+                      },
                     })}
                   />
                 </div>
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -257,14 +292,18 @@ const Register = () => {
                 type="checkbox"
                 id="terms"
                 className="mt-1"
-                {...register('terms', { required: 'You must accept the terms' })}
+                {...register("terms", {
+                  required: "You must accept the terms",
+                })}
               />
               <label htmlFor="terms" className="text-sm text-gray-600">
                 I agree to the Terms of Service and Privacy Policy
               </label>
             </div>
             {errors.terms && (
-              <p className="text-red-500 text-sm -mt-4">{errors.terms.message}</p>
+              <p className="text-red-500 text-sm -mt-4">
+                {errors.terms.message}
+              </p>
             )}
 
             {/* Submit */}
@@ -279,7 +318,7 @@ const Register = () => {
                   Creating account...
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </form>
@@ -287,8 +326,11 @@ const Register = () => {
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-primary-600 hover:text-primary-700 font-medium"
+              >
                 Sign in
               </Link>
             </p>

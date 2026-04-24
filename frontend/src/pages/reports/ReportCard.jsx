@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 import useAcademicStore from '../../store/academicStore';
 import useReportStore from '../../store/reportStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const ReportCard = () => {
   const { studentId } = useParams();
@@ -30,12 +31,15 @@ const ReportCard = () => {
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
       <nav className="bg-white shadow-sm border-b print:hidden">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to={`/students/${studentId}`} className="text-gray-500 hover:text-gray-700 flex items-center gap-2">
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </Link>
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to={`/students/${studentId}`} className="text-gray-500 hover:text-gray-700 flex items-center gap-2 shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </Link>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <select className="input-field min-w-[220px]" value={academicYearId} onChange={(e) => setAcademicYearId(e.target.value)}>
               <option value="">Select Academic Year</option>
               {academicYears.map((year) => (

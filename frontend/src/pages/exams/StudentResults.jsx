@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Trophy, Award, BookOpen, FileText } from 'lucide-react';
 import useExamStore from '../../store/examStore';
 import { format } from 'date-fns';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const StudentResults = () => {
   const { studentId } = useParams();
@@ -25,11 +26,14 @@ const StudentResults = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to={`/students/${studentId}`} className="text-gray-500 hover:text-gray-700 flex items-center gap-2">
-            <ArrowLeft className="w-5 h-5" /> Back to Profile
-          </Link>
-          <div className="text-right flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to={`/students/${studentId}`} className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,200px)]">
+              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Profile</span>
+            </Link>
+          </div>
+          <div className="text-left sm:text-right flex flex-wrap items-center gap-3 sm:gap-4 justify-end">
             <div>
               <h1 className="text-xl font-bold text-gray-900">{student.name}</h1>
               <p className="text-sm text-gray-500">Adm No: {student.admissionNumber}</p>

@@ -27,6 +27,7 @@ import useFeeStore from '../../store/feeStore';
 import useAcademicStore from '../../store/academicStore';
 import useAuthStore from '../../store/authStore';
 import DataTable from '../../components/common/DataTable';
+import BrandLogo from '../../components/common/BrandLogo';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const TABS = [
@@ -196,11 +197,12 @@ const FeeReports = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+          <BrandLogo linkTo="/dashboard" />
+          <Link to="/dashboard" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-bold text-gray-900">{user?.schoolName}</h1>
             <p className="text-xs text-gray-500">Fee reports</p>
           </div>

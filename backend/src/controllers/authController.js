@@ -1,21 +1,25 @@
-const mongoose = require('mongoose');
-const User = require('../models/User');
-const School = require('../models/School');
-const Student = require('../models/Student');
-const Teacher = require('../models/Teacher');
-const RefreshToken = require('../models/RefreshToken');
+const mongoose = require("mongoose");
+const User = require("../models/User");
+const School = require("../models/School");
+const Student = require("../models/Student");
+const Teacher = require("../models/Teacher");
+const RefreshToken = require("../models/RefreshToken");
 const {
   hashRefreshToken,
   generateOpaqueRefreshToken,
   generateAccessToken,
   getRefreshExpiresAt,
-} = require('../utils/sessionTokens');
-const { validationResult } = require('express-validator');
-const PLANS = require('../config/plans');
-const { messageForSchoolInactive } = require('../lib/schoolAccessMessages');
+} = require("../utils/sessionTokens");
+const { validationResult } = require("express-validator");
+const PLANS = require("../config/plans");
+const { messageForSchoolInactive } = require("../lib/schoolAccessMessages");
 
 async function issueSession(user, schoolIdForToken) {
-  const accessToken = generateAccessToken(user._id, user.role, schoolIdForToken);
+  const accessToken = generateAccessToken(
+    user._id,
+    user.role,
+    schoolIdForToken,
+  );
   const rawRefresh = generateOpaqueRefreshToken();
   const tokenHash = hashRefreshToken(rawRefresh);
   const expiresAt = getRefreshExpiresAt();
@@ -28,21 +32,28 @@ async function issueSession(user, schoolIdForToken) {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    console.log('Starting registration...', req.body);
+    console.log("Starting registration...", req.body);
 
     // Validate input
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: errors.array()
+        message: "Validation failed",
+        errors: errors.array(),
       });
     }
 
-    const { schoolName, name, email, password, phone, subscriptionPlan: requestedPlan } = req.body;
+    const {
+      schoolName,
+      name,
+      email,
+      password,
+      phone,
+      subscriptionPlan: requestedPlan,
+    } = req.body;
 
-    let selectedPlan = 'free';
+    let selectedPlan = "free";
     if (requestedPlan && PLANS[requestedPlan]) {
       selectedPlan = requestedPlan;
     }
@@ -52,39 +63,39 @@ exports.register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists'
+        message: "User with this email already exists",
       });
     }
 
     // Create school first
-    console.log('Creating school...');
+    console.log("Creating school...");
     const schoolPayload = { name: schoolName };
-    if (selectedPlan !== 'free') {
+    if (selectedPlan !== "free") {
       const oneDayFromNow = new Date(Date.now() + 24 * 60 * 60 * 1000);
       schoolPayload.subscriptionPlan = selectedPlan;
       schoolPayload.subscriptionExpiry = oneDayFromNow;
       schoolPayload.pendingPayment = true;
     } else {
-      schoolPayload.subscriptionPlan = 'free';
+      schoolPayload.subscriptionPlan = "free";
       schoolPayload.pendingPayment = false;
     }
     const school = await School.create(schoolPayload);
-    console.log('School created:', school._id);
+    console.log("School created:", school._id);
 
     // Create admin user
-    console.log('Creating admin user...');
+    console.log("Creating admin user...");
     const user = await User.create({
       email: email.toLowerCase(),
       password,
-      role: 'admin',
+      role: "admin",
       schoolId: school._id,
       profile: {
         name,
-        phone: phone || '',
-        address: ''
-      }
+        phone: phone || "",
+        address: "",
+      },
     });
-    console.log('User created:', user._id);
+    console.log("User created:", user._id);
 
     // Update school owner
     school.owner = user._id;
@@ -92,11 +103,11 @@ exports.register = async (req, res) => {
 
     const { accessToken, refreshToken } = await issueSession(user, school._id);
 
-    console.log('Registration complete!');
+    console.log("Registration complete!");
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: "Registration successful",
       data: {
         accessToken,
         refreshToken,
@@ -106,23 +117,20 @@ exports.register = async (req, res) => {
           role: user.role,
           name: user.profile.name,
           schoolId: school._id,
-          schoolName: school.name
-        }
-      }
+          schoolName: school.name,
+        },
+      },
     });
-
   } catch (error) {
-    console.error('Registration Error:', {
+    console.error("Registration Error:", {
       message: error.message,
       stack: error.stack,
-      fullError: error
+      fullError: error,
     });
 
     res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' 
-        ? `Registration failed: ${error.message}` 
-        : 'Server error during registration'
+      message: "Unable to complete registration. Please try again in a moment.",
     });
   }
 };
@@ -132,30 +140,50 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    console.log('Login attempt:', req.body.email);
+    console.log("Login attempt:", req.body.email);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        errors: errors.array()
+        message: "Validation failed",
+        errors: errors.array(),
       });
     }
 
     const { email, password } = req.body;
 
     // #region agent log
-    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H1',location:'authController.js:login:entry',message:'login start',data:{readyState:mongoose.connection.readyState,hasJwtSecret:Boolean(process.env.JWT_SECRET)},timestamp:Date.now()})}).catch(()=>{});
+    fetch("http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "4d5952",
+      },
+      body: JSON.stringify({
+        sessionId: "4d5952",
+        runId: process.env.DEBUG_RUN_ID || "pre-fix",
+        hypothesisId: "H1",
+        location: "authController.js:login:entry",
+        message: "login start",
+        data: {
+          readyState: mongoose.connection.readyState,
+          hasJwtSecret: Boolean(process.env.JWT_SECRET),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
 
     // Check if user exists (include password for comparison)
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
-    
+    const user = await User.findOne({ email: email.toLowerCase() }).select(
+      "+password",
+    );
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
@@ -163,7 +191,7 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Account is deactivated'
+        message: "Account is deactivated",
       });
     }
 
@@ -172,17 +200,17 @@ exports.login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
     let school = null;
-    if (user.role !== 'superadmin') {
+    if (user.role !== "superadmin") {
       school = await School.findById(user.schoolId);
       if (!school) {
         return res.status(401).json({
           success: false,
-          message: 'School not found for this account'
+          message: "School not found for this account",
         });
       }
       if (!school.isActive) {
@@ -195,18 +223,37 @@ exports.login = async (req, res) => {
 
     const { accessToken, refreshToken } = await issueSession(
       user,
-      user.schoolId || null
+      user.schoolId || null,
     );
 
     // #region agent log
-    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H3',location:'authController.js:login:postSession',message:'issueSession ok, profile shape',data:{hasProfile:Boolean(user.profile),hasProfileName:Boolean(user.profile&&user.profile.name),role:user.role},timestamp:Date.now()})}).catch(()=>{});
+    fetch("http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "4d5952",
+      },
+      body: JSON.stringify({
+        sessionId: "4d5952",
+        runId: process.env.DEBUG_RUN_ID || "pre-fix",
+        hypothesisId: "H3",
+        location: "authController.js:login:postSession",
+        message: "issueSession ok, profile shape",
+        data: {
+          hasProfile: Boolean(user.profile),
+          hasProfileName: Boolean(user.profile && user.profile.name),
+          role: user.role,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
 
-    console.log('Login successful:', user.email);
+    console.log("Login successful:", user.email);
 
     res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       data: {
         accessToken,
         refreshToken,
@@ -216,22 +263,41 @@ exports.login = async (req, res) => {
           role: user.role,
           name: user.profile.name,
           schoolId: school ? school._id : null,
-          schoolName: school ? school.name : 'Platform',
-          subscriptionPlan: school ? school.subscriptionPlan : null
-        }
-      }
+          schoolName: school ? school.name : "Platform",
+          subscriptionPlan: school ? school.subscriptionPlan : null,
+        },
+      },
     });
-
   } catch (error) {
     // #region agent log
-    fetch('http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'4d5952'},body:JSON.stringify({sessionId:'4d5952',runId:process.env.DEBUG_RUN_ID||'pre-fix',hypothesisId:'H1-H4',location:'authController.js:login:catch',message:'login threw',data:{errName:error&&error.name,errMessage:error&&error.message,errCode:error&&error.code,readyState:mongoose.connection.readyState,isTypeError:error instanceof TypeError},timestamp:Date.now()})}).catch(()=>{});
+    fetch("http://127.0.0.1:7927/ingest/e6ebbb8a-aeab-4952-8d24-7d8dfe5ca2e6", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "4d5952",
+      },
+      body: JSON.stringify({
+        sessionId: "4d5952",
+        runId: process.env.DEBUG_RUN_ID || "pre-fix",
+        hypothesisId: "H1-H4",
+        location: "authController.js:login:catch",
+        message: "login threw",
+        data: {
+          errName: error && error.name,
+          errMessage: error && error.message,
+          errCode: error && error.code,
+          readyState: mongoose.connection.readyState,
+          isTypeError: error instanceof TypeError,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
     // #endregion
-    console.error('Login Error:', error);
+    console.error("Login Error:", error);
     res.status(500).json({
       success: false,
-      message: process.env.NODE_ENV === 'development' 
-        ? `Login failed: ${error.message}` 
-        : 'Server error during login'
+      message:
+        "Unable to sign in right now. Please try again in a moment.",
     });
   }
 };
@@ -242,10 +308,10 @@ exports.login = async (req, res) => {
 exports.refresh = async (req, res) => {
   try {
     const raw = req.body?.refreshToken;
-    if (!raw || typeof raw !== 'string') {
+    if (!raw || typeof raw !== "string") {
       return res.status(400).json({
         success: false,
-        message: 'Refresh token is required',
+        message: "Refresh token is required",
       });
     }
 
@@ -259,7 +325,7 @@ exports.refresh = async (req, res) => {
     if (!doc) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired refresh token',
+        message: "Invalid or expired refresh token",
       });
     }
 
@@ -267,17 +333,17 @@ exports.refresh = async (req, res) => {
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired refresh token',
+        message: "Invalid or expired refresh token",
       });
     }
 
     let school = null;
-    if (user.role !== 'superadmin') {
+    if (user.role !== "superadmin") {
       school = await School.findById(user.schoolId);
       if (!school) {
         return res.status(401).json({
           success: false,
-          message: 'School not found for this account',
+          message: "School not found for this account",
         });
       }
       if (!school.isActive) {
@@ -301,7 +367,11 @@ exports.refresh = async (req, res) => {
     doc.replacedBy = newDoc._id;
     await doc.save();
 
-    const accessToken = generateAccessToken(user._id, user.role, user.schoolId || null);
+    const accessToken = generateAccessToken(
+      user._id,
+      user.role,
+      user.schoolId || null,
+    );
 
     res.status(200).json({
       success: true,
@@ -311,13 +381,10 @@ exports.refresh = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Refresh Error:', error);
+    console.error("Refresh Error:", error);
     res.status(500).json({
       success: false,
-      message:
-        process.env.NODE_ENV === 'development'
-          ? `Refresh failed: ${error.message}`
-          : 'Server error during refresh',
+      message: "Session could not be renewed. Please sign in again.",
     });
   }
 };
@@ -328,22 +395,22 @@ exports.refresh = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     const raw = req.body?.refreshToken;
-    if (raw && typeof raw === 'string') {
+    if (raw && typeof raw === "string") {
       const tokenHash = hashRefreshToken(raw.trim());
       await RefreshToken.updateOne(
         { tokenHash, revokedAt: null },
-        { $set: { revokedAt: new Date() } }
+        { $set: { revokedAt: new Date() } },
       );
     }
     res.status(200).json({
       success: true,
-      message: 'Logged out',
+      message: "Logged out",
     });
   } catch (error) {
-    console.error('Logout Error:', error);
+    console.error("Logout Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during logout',
+      message: "Server error during logout",
     });
   }
 };
@@ -355,21 +422,21 @@ exports.getMe = async (req, res) => {
   try {
     const uid = req.user.id || req.user._id;
     const user = await User.findById(uid).populate(
-      'schoolId',
-      'name subscriptionPlan subscriptionExpiry limits featureOverrides pendingPayment paymentDueDate'
+      "schoolId",
+      "name subscriptionPlan subscriptionExpiry limits featureOverrides pendingPayment paymentDueDate",
     );
 
     res.status(200).json({
       success: true,
       data: {
-        user
-      }
+        user,
+      },
     });
   } catch (error) {
-    console.error('GetMe Error:', error);
+    console.error("GetMe Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching user data'
+      message: "Error fetching user data",
     });
   }
 };
@@ -383,7 +450,7 @@ exports.changeMyPassword = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
@@ -391,11 +458,11 @@ exports.changeMyPassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const uid = req.user.id || req.user._id;
 
-    const user = await User.findById(uid).select('+password');
+    const user = await User.findById(uid).select("+password");
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
     }
 
@@ -403,14 +470,14 @@ exports.changeMyPassword = async (req, res) => {
     if (!currentOk) {
       return res.status(400).json({
         success: false,
-        message: 'Current password is incorrect',
+        message: "Current password is incorrect",
       });
     }
 
     if (String(newPassword) === String(currentPassword)) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be different from your current password',
+        message: "New password must be different from your current password",
       });
     }
 
@@ -419,13 +486,13 @@ exports.changeMyPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password updated successfully',
+      message: "Password updated successfully",
     });
   } catch (error) {
-    console.error('ChangeMyPassword Error:', error);
+    console.error("ChangeMyPassword Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error changing password',
+      message: "Error changing password",
     });
   }
 };
@@ -439,7 +506,7 @@ exports.createParent = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
@@ -454,29 +521,32 @@ exports.createParent = async (req, res) => {
     if (!student) {
       return res.status(404).json({
         success: false,
-        message: 'Student not found',
+        message: "Student not found",
       });
     }
 
     if (student.parentId) {
       return res.status(400).json({
         success: false,
-        message: 'This student is already linked to a parent account',
+        message: "This student is already linked to a parent account",
       });
     }
 
     const normalizedEmail = String(email).toLowerCase();
-    const existingUser = await User.findOne({ email: normalizedEmail }).select('+password');
+    const existingUser = await User.findOne({ email: normalizedEmail }).select(
+      "+password",
+    );
 
     let parentUser;
-    let successMessage = 'Parent account created successfully';
+    let successMessage = "Parent account created successfully";
 
     if (existingUser) {
-      const isSameSchool = String(existingUser.schoolId) === String(req.user.schoolId);
-      if (existingUser.role !== 'parent' || !isSameSchool) {
+      const isSameSchool =
+        String(existingUser.schoolId) === String(req.user.schoolId);
+      if (existingUser.role !== "parent" || !isSameSchool) {
         return res.status(400).json({
           success: false,
-          message: 'User with this email already exists',
+          message: "User with this email already exists",
         });
       }
 
@@ -484,48 +554,52 @@ exports.createParent = async (req, res) => {
         // Siblings: link this student to an existing active parent account (no new User, password optional).
         existingUser.profile = {
           ...(existingUser.profile || {}),
-          name: name || existingUser.profile?.name || '',
-          phone: phone !== undefined && phone !== null ? String(phone) : existingUser.profile?.phone || '',
+          name: name || existingUser.profile?.name || "",
+          phone:
+            phone !== undefined && phone !== null
+              ? String(phone)
+              : existingUser.profile?.phone || "",
         };
         await existingUser.save();
         parentUser = existingUser;
-        successMessage = 'Parent linked to student successfully';
+        successMessage = "Parent linked to student successfully";
       } else {
-        const pwd = password != null ? String(password) : '';
+        const pwd = password != null ? String(password) : "";
         if (pwd.length < 6) {
           return res.status(400).json({
             success: false,
-            message: 'Password must be at least 6 characters to reactivate this parent account',
+            message:
+              "Password must be at least 6 characters to reactivate this parent account",
           });
         }
         existingUser.isActive = true;
         existingUser.password = pwd;
         existingUser.profile = {
           ...(existingUser.profile || {}),
-          name: name || existingUser.profile?.name || '',
-          phone: phone || existingUser.profile?.phone || '',
+          name: name || existingUser.profile?.name || "",
+          phone: phone || existingUser.profile?.phone || "",
         };
         await existingUser.save();
         parentUser = existingUser;
-        successMessage = 'Parent account relinked successfully';
+        successMessage = "Parent account relinked successfully";
       }
     } else {
-      const pwd = password != null ? String(password) : '';
+      const pwd = password != null ? String(password) : "";
       if (pwd.length < 6) {
         return res.status(400).json({
           success: false,
-          message: 'Password must be at least 6 characters',
+          message: "Password must be at least 6 characters",
         });
       }
       parentUser = await User.create({
         email: normalizedEmail,
         password: pwd,
-        role: 'parent',
+        role: "parent",
         schoolId: req.user.schoolId,
         profile: {
           name,
-          phone: phone || '',
-          address: '',
+          phone: phone || "",
+          address: "",
         },
       });
     }
@@ -547,10 +621,10 @@ exports.createParent = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Create Parent Error:', error);
+    console.error("Create Parent Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error creating parent account',
+      message: "Error creating parent account",
     });
   }
 };
@@ -564,7 +638,7 @@ exports.createTeacherAccount = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
@@ -579,14 +653,14 @@ exports.createTeacherAccount = async (req, res) => {
     if (!teacher) {
       return res.status(404).json({
         success: false,
-        message: 'Teacher not found',
+        message: "Teacher not found",
       });
     }
 
     if (teacher.userId) {
       return res.status(400).json({
         success: false,
-        message: 'This teacher is already linked to a login account',
+        message: "This teacher is already linked to a login account",
       });
     }
 
@@ -595,32 +669,32 @@ exports.createTeacherAccount = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists',
+        message: "User with this email already exists",
       });
     }
 
-    const pwd = password != null ? String(password) : '';
+    const pwd = password != null ? String(password) : "";
     if (pwd.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
+        message: "Password must be at least 6 characters",
       });
     }
 
     const displayName =
-      name
-      || `${teacher.personalInfo?.firstName || ''} ${teacher.personalInfo?.lastName || ''}`.trim()
-      || 'Teacher';
+      name ||
+      `${teacher.personalInfo?.firstName || ""} ${teacher.personalInfo?.lastName || ""}`.trim() ||
+      "Teacher";
 
     const user = await User.create({
       email: normalizedEmail,
       password: pwd,
-      role: 'teacher',
+      role: "teacher",
       schoolId: req.user.schoolId,
       profile: {
         name: displayName,
-        phone: phone || teacher.contactInfo?.phone || '',
-        address: '',
+        phone: phone || teacher.contactInfo?.phone || "",
+        address: "",
       },
     });
 
@@ -629,7 +703,7 @@ exports.createTeacherAccount = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Teacher login account created successfully',
+      message: "Teacher login account created successfully",
       data: {
         teacherId: teacher._id,
         user: {
@@ -641,10 +715,10 @@ exports.createTeacherAccount = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Create Teacher Account Error:', error);
+    console.error("Create Teacher Account Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error creating teacher account',
+      message: "Error creating teacher account",
     });
   }
 };
@@ -660,7 +734,7 @@ exports.resetTeacherPassword = async (req, res) => {
     if (!newPassword || String(newPassword).length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters',
+        message: "New password must be at least 6 characters",
       });
     }
 
@@ -672,20 +746,20 @@ exports.resetTeacherPassword = async (req, res) => {
     if (!teacher || !teacher.userId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked teacher account found',
+        message: "No linked teacher account found",
       });
     }
 
     const teacherUser = await User.findOne({
       _id: teacher.userId,
       schoolId: req.user.schoolId,
-      role: 'teacher',
+      role: "teacher",
       isActive: true,
     });
     if (!teacherUser) {
       return res.status(404).json({
         success: false,
-        message: 'Linked teacher account not found',
+        message: "Linked teacher account not found",
       });
     }
 
@@ -694,13 +768,13 @@ exports.resetTeacherPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Teacher password reset successfully',
+      message: "Teacher password reset successfully",
     });
   } catch (error) {
-    console.error('Reset Teacher Password Error:', error);
+    console.error("Reset Teacher Password Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error resetting teacher password',
+      message: "Error resetting teacher password",
     });
   }
 };
@@ -720,7 +794,7 @@ exports.unlinkTeacherAccount = async (req, res) => {
     if (!teacher || !teacher.userId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked teacher account found',
+        message: "No linked teacher account found",
       });
     }
 
@@ -729,19 +803,19 @@ exports.unlinkTeacherAccount = async (req, res) => {
     await teacher.save();
 
     await User.findOneAndUpdate(
-      { _id: teacherUserId, schoolId: req.user.schoolId, role: 'teacher' },
-      { isActive: false }
+      { _id: teacherUserId, schoolId: req.user.schoolId, role: "teacher" },
+      { isActive: false },
     );
 
     res.status(200).json({
       success: true,
-      message: 'Teacher account unlinked successfully (account deactivated)',
+      message: "Teacher account unlinked successfully (account deactivated)",
     });
   } catch (error) {
-    console.error('Unlink Teacher Account Error:', error);
+    console.error("Unlink Teacher Account Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error unlinking teacher account',
+      message: "Error unlinking teacher account",
     });
   }
 };
@@ -755,7 +829,7 @@ exports.createStudentAccount = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
@@ -770,14 +844,14 @@ exports.createStudentAccount = async (req, res) => {
     if (!student) {
       return res.status(404).json({
         success: false,
-        message: 'Student not found',
+        message: "Student not found",
       });
     }
 
     if (student.userId) {
       return res.status(400).json({
         success: false,
-        message: 'This student is already linked to a login account',
+        message: "This student is already linked to a login account",
       });
     }
 
@@ -786,32 +860,32 @@ exports.createStudentAccount = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists',
+        message: "User with this email already exists",
       });
     }
 
-    const pwd = password != null ? String(password) : '';
+    const pwd = password != null ? String(password) : "";
     if (pwd.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
+        message: "Password must be at least 6 characters",
       });
     }
 
     const displayName =
-      name
-      || `${student.personalInfo?.firstName || ''} ${student.personalInfo?.lastName || ''}`.trim()
-      || 'Student';
+      name ||
+      `${student.personalInfo?.firstName || ""} ${student.personalInfo?.lastName || ""}`.trim() ||
+      "Student";
 
     const user = await User.create({
       email: normalizedEmail,
       password: pwd,
-      role: 'student',
+      role: "student",
       schoolId: req.user.schoolId,
       profile: {
         name: displayName,
-        phone: phone || student.contactInfo?.phone || '',
-        address: '',
+        phone: phone || student.contactInfo?.phone || "",
+        address: "",
       },
     });
 
@@ -820,7 +894,7 @@ exports.createStudentAccount = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Student login account created successfully',
+      message: "Student login account created successfully",
       data: {
         studentId: student._id,
         user: {
@@ -832,10 +906,10 @@ exports.createStudentAccount = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Create Student Account Error:', error);
+    console.error("Create Student Account Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error creating student account',
+      message: "Error creating student account",
     });
   }
 };
@@ -851,7 +925,7 @@ exports.resetStudentPassword = async (req, res) => {
     if (!newPassword || String(newPassword).length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters',
+        message: "New password must be at least 6 characters",
       });
     }
 
@@ -863,20 +937,20 @@ exports.resetStudentPassword = async (req, res) => {
     if (!student || !student.userId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked student account found',
+        message: "No linked student account found",
       });
     }
 
     const studentUser = await User.findOne({
       _id: student.userId,
       schoolId: req.user.schoolId,
-      role: 'student',
+      role: "student",
       isActive: true,
     });
     if (!studentUser) {
       return res.status(404).json({
         success: false,
-        message: 'Linked student account not found',
+        message: "Linked student account not found",
       });
     }
 
@@ -885,13 +959,13 @@ exports.resetStudentPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Student password reset successfully',
+      message: "Student password reset successfully",
     });
   } catch (error) {
-    console.error('Reset Student Password Error:', error);
+    console.error("Reset Student Password Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error resetting student password',
+      message: "Error resetting student password",
     });
   }
 };
@@ -911,7 +985,7 @@ exports.unlinkStudentAccount = async (req, res) => {
     if (!student || !student.userId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked student account found',
+        message: "No linked student account found",
       });
     }
 
@@ -920,19 +994,19 @@ exports.unlinkStudentAccount = async (req, res) => {
     await student.save();
 
     await User.findOneAndUpdate(
-      { _id: studentUserId, schoolId: req.user.schoolId, role: 'student' },
-      { isActive: false }
+      { _id: studentUserId, schoolId: req.user.schoolId, role: "student" },
+      { isActive: false },
     );
 
     res.status(200).json({
       success: true,
-      message: 'Student account unlinked successfully (account deactivated)',
+      message: "Student account unlinked successfully (account deactivated)",
     });
   } catch (error) {
-    console.error('Unlink Student Account Error:', error);
+    console.error("Unlink Student Account Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error unlinking student account',
+      message: "Error unlinking student account",
     });
   }
 };
@@ -942,21 +1016,32 @@ exports.unlinkStudentAccount = async (req, res) => {
 // @access  Private (admin)
 exports.checkEmailAvailability = async (req, res) => {
   try {
-    const email = String(req.query.email || '').trim().toLowerCase();
+    const email = String(req.query.email || "")
+      .trim()
+      .toLowerCase();
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required',
+        message: "Email is required",
       });
     }
 
-    const existingUser = await User.findOne({ email }).select('_id email role schoolId isActive').lean();
+    const existingUser = await User.findOne({ email })
+      .select("_id email role schoolId isActive")
+      .lean();
     const sameSchool =
-      !!existingUser && String(existingUser.schoolId) === String(req.user.schoolId);
+      !!existingUser &&
+      String(existingUser.schoolId) === String(req.user.schoolId);
     const canRelink =
-      !!existingUser && existingUser.role === 'parent' && sameSchool && !existingUser.isActive;
+      !!existingUser &&
+      existingUser.role === "parent" &&
+      sameSchool &&
+      !existingUser.isActive;
     const canLinkExistingActiveParent =
-      !!existingUser && existingUser.role === 'parent' && sameSchool && !!existingUser.isActive;
+      !!existingUser &&
+      existingUser.role === "parent" &&
+      sameSchool &&
+      !!existingUser.isActive;
     res.status(200).json({
       success: true,
       data: {
@@ -975,10 +1060,10 @@ exports.checkEmailAvailability = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Check Email Availability Error:', error);
+    console.error("Check Email Availability Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error checking email availability',
+      message: "Error checking email availability",
     });
   }
 };
@@ -994,7 +1079,7 @@ exports.resetParentPassword = async (req, res) => {
     if (!newPassword || String(newPassword).length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters',
+        message: "New password must be at least 6 characters",
       });
     }
 
@@ -1006,20 +1091,20 @@ exports.resetParentPassword = async (req, res) => {
     if (!student || !student.parentId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked parent found for this student',
+        message: "No linked parent found for this student",
       });
     }
 
     const parentUser = await User.findOne({
       _id: student.parentId,
       schoolId: req.user.schoolId,
-      role: 'parent',
+      role: "parent",
       isActive: true,
     });
     if (!parentUser) {
       return res.status(404).json({
         success: false,
-        message: 'Linked parent account not found',
+        message: "Linked parent account not found",
       });
     }
 
@@ -1028,13 +1113,13 @@ exports.resetParentPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Parent password reset successfully',
+      message: "Parent password reset successfully",
     });
   } catch (error) {
-    console.error('Reset Parent Password Error:', error);
+    console.error("Reset Parent Password Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error resetting parent password',
+      message: "Error resetting parent password",
     });
   }
 };
@@ -1054,7 +1139,7 @@ exports.unlinkParentAccount = async (req, res) => {
     if (!student || !student.parentId) {
       return res.status(404).json({
         success: false,
-        message: 'No linked parent found for this student',
+        message: "No linked parent found for this student",
       });
     }
 
@@ -1070,25 +1155,26 @@ exports.unlinkParentAccount = async (req, res) => {
 
     if (remaining === 0) {
       await User.findOneAndUpdate(
-        { _id: parentUserId, schoolId: req.user.schoolId, role: 'parent' },
-        { isActive: false }
+        { _id: parentUserId, schoolId: req.user.schoolId, role: "parent" },
+        { isActive: false },
       );
       res.status(200).json({
         success: true,
-        message: 'Parent account unlinked successfully (account deactivated)',
+        message: "Parent account unlinked successfully (account deactivated)",
       });
       return;
     }
 
     res.status(200).json({
       success: true,
-      message: 'Student unlinked from parent; parent account remains active for other children',
+      message:
+        "Student unlinked from parent; parent account remains active for other children",
     });
   } catch (error) {
-    console.error('Unlink Parent Account Error:', error);
+    console.error("Unlink Parent Account Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error unlinking parent account',
+      message: "Error unlinking parent account",
     });
   }
 };

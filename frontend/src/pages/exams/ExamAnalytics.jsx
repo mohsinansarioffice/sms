@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Trophy, AlertTriangle, Users, BookOpen } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import useExamStore from '../../store/examStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const ExamAnalytics = () => {
   const { id } = useParams();
@@ -36,11 +37,14 @@ const ExamAnalytics = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/exams" className="text-gray-500 hover:text-gray-700 flex items-center gap-2">
-            <ArrowLeft className="w-5 h-5" /> Back to Exams
-          </Link>
-          <div className="text-right">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to="/exams" className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm sm:text-base shrink-0 min-w-0 max-w-[min(100%,220px)]">
+              <ArrowLeft className="w-5 h-5 shrink-0" /> <span className="truncate">Back to Exams</span>
+            </Link>
+          </div>
+          <div className="text-left sm:text-right min-w-0">
             <h1 className="text-xl font-bold text-gray-900">{exam?.name} Analytics</h1>
             <p className="text-sm text-gray-500">
               {exam?.classId?.name} | {exam?.subjectId?.name}

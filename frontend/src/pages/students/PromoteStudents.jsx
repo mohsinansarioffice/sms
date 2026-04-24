@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAcademicStore from '../../store/academicStore';
 import useStudentStore from '../../store/studentStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const PromoteStudents = () => {
   const { classes, sections, academicYears, fetchClasses, fetchSections, fetchAcademicYears } = useAcademicStore();
@@ -69,10 +70,13 @@ const PromoteStudents = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <Link to="/students" className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
-            <ArrowLeft className="w-5 h-5" />
-            Back to Students
-          </Link>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 min-w-0">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to="/students" className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-2 text-sm sm:text-base min-w-0 max-w-full">
+              <ArrowLeft className="w-5 h-5 shrink-0" />
+              <span className="truncate">Back to Students</span>
+            </Link>
+          </div>
         </div>
       </nav>
 

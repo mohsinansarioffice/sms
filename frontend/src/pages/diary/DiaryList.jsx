@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import useDiaryStore from '../../store/diaryStore';
 import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const TYPE_LABELS = {
   homework: { label: 'Homework', color: 'bg-blue-100 text-blue-800' },
@@ -22,6 +23,12 @@ const STATUS_LABELS = {
 const DiaryList = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const homePath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
   const { entries, total, currentPage, totalPages, isLoading, error, fetchEntries, deleteEntry, clearError } = useDiaryStore();
   const { classes, sections, fetchClasses, fetchSections } = useAcademicStore();
 
@@ -92,8 +99,9 @@ const DiaryList = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={homePath} />
+            <button type="button" onClick={() => navigate(homePath)} className="btn-secondary flex items-center gap-2 shrink-0">
               <ArrowLeft className="w-4 h-4" /> Dashboard
             </button>
             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useEventStore from '../../store/eventStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const EventForm = () => {
   const navigate = useNavigate();
@@ -32,10 +33,13 @@ const EventForm = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <Link to="/events" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700">
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </Link>
+          <div className="flex min-w-0 flex-wrap items-center gap-3 sm:gap-4">
+            <BrandLogo linkTo="/dashboard" />
+            <Link to="/events" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </Link>
+          </div>
         </div>
       </nav>
       <div className="max-w-4xl mx-auto px-4 py-8">

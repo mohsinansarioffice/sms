@@ -4,6 +4,7 @@ import { Loader2, BookOpen, Mail, Bell, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import useAuthStore from '../../store/authStore';
 import LogoutButton from '../../components/common/LogoutButton';
+import BrandLogo from '../../components/common/BrandLogo';
 import useStudentPortalStore from '../../store/studentPortalStore';
 import useDiaryStore from '../../store/diaryStore';
 
@@ -52,9 +53,12 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Student Portal</h1>
-            <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <BrandLogo linkTo="/student/dashboard" className="mt-0.5" />
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900">Student Portal</h1>
+              <p className="text-sm text-gray-500">Welcome, {user?.name}</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link to="/messages" className="btn-secondary inline-flex items-center gap-2">

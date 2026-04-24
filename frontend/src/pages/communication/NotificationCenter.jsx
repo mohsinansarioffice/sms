@@ -6,10 +6,17 @@ import useCommunicationStore from '../../store/communicationStore';
 import { PriorityBadge } from './priorityBadges';
 import { useSchoolPlanFeatures } from '../../hooks/useSchoolPlanFeatures';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const homePath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
   const isAdmin = user?.role === 'admin';
   const { feature, ready } = useSchoolPlanFeatures();
   const comm = feature('communication');
@@ -61,16 +68,17 @@ const NotificationCenter = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={homePath} />
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
-              className="btn-secondary flex items-center gap-2"
+              onClick={() => navigate(homePath)}
+              className="btn-secondary flex items-center gap-2 shrink-0"
             >
               <ArrowLeft className="w-4 h-4" /> Dashboard
             </button>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-primary-600" /> Notification center
+            <h1 className="text-xl font-bold text-gray-900 flex min-w-0 items-center gap-2">
+              <Bell className="w-6 h-6 text-primary-600 shrink-0" /> <span className="truncate">Notification center</span>
             </h1>
           </div>
         </nav>
@@ -98,12 +106,13 @@ const NotificationCenter = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+          <BrandLogo linkTo={homePath} />
+          <button type="button" onClick={() => navigate(homePath)} className="btn-secondary flex items-center gap-2 shrink-0">
             <ArrowLeft className="w-4 h-4" /> Dashboard
           </button>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Bell className="w-6 h-6 text-primary-600" /> Notification center
+          <h1 className="text-xl font-bold text-gray-900 flex min-w-0 items-center gap-2">
+            <Bell className="w-6 h-6 text-primary-600 shrink-0" /> <span className="truncate">Notification center</span>
           </h1>
         </div>
       </nav>

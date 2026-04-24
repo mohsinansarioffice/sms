@@ -30,7 +30,13 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
-    const message = error.response?.data?.message || 'Something went wrong';
+    // Never pass raw system/network errors to the UI; backend usually sends a safe message
+    const raw = error.response?.data?.message;
+    const message =
+      raw ||
+      (error.response
+        ? 'Something went wrong. Please try again later.'
+        : 'Unable to reach the server. Check your connection and try again.');
 
     if (status === 401 && originalRequest && !originalRequest._retry) {
       const url = String(originalRequest.url || '');

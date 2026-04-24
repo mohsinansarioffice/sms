@@ -13,6 +13,7 @@ import {
 import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
 import LogoutButton from '../../components/common/LogoutButton';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const SuperAdminDashboard = () => {
   const { overview, fetchOverview, fetchPaymentAlerts, paymentAlerts, isLoading, error, clearError } =
@@ -48,10 +49,13 @@ const SuperAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Platform overview</h1>
-            <p className="text-sm text-gray-500">All schools</p>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <BrandLogo linkTo="/superadmin/dashboard" className="mt-0.5" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Platform overview</h1>
+              <p className="text-sm text-gray-500">All schools</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/superadmin/schools" className="btn-primary inline-flex items-center gap-2">

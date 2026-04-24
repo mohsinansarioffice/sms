@@ -65,8 +65,7 @@ app.use((err, req, res, next) => {
   console.error("Global error handler:", err);
   res.status(500).json({
     success: false,
-    message:
-      process.env.NODE_ENV === "development" ? err.message : "Server error",
+    message: "Something went wrong. Please try again later.",
   });
 });
 

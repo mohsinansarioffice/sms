@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import useSuperAdminStore from '../../store/superAdminStore';
 import ToggleSwitch from '../../components/superadmin/ToggleSwitch';
 import LogoutButton from '../../components/common/LogoutButton';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const FEATURE_LABELS = {
   attendance: 'Attendance',
@@ -219,9 +220,12 @@ const SchoolDetail = () => {
 
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <button type="button" onClick={() => navigate('/superadmin/schools')} className="btn-secondary flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo="/superadmin/dashboard" />
+            <button type="button" onClick={() => navigate('/superadmin/schools')} className="btn-secondary flex items-center gap-2 shrink-0">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
           <LogoutButton className="btn-secondary inline-flex items-center gap-2" />
         </div>
       </nav>

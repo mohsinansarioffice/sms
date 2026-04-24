@@ -12,6 +12,7 @@ import useAcademicStore from '../../store/academicStore';
 import useSubscriptionStore from '../../store/subscriptionStore';
 import DataTable from '../../components/common/DataTable';
 import LogoutButton from '../../components/common/LogoutButton';
+import BrandLogo from '../../components/common/BrandLogo';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const STUDENT_IMPORT_SAMPLE_CSV = `firstName,lastName,guardianName,guardianPhone,className,sectionName,gender,dateOfBirth,phone,email
@@ -351,19 +352,25 @@ const StudentList = () => {
               />
             </div>
             <div className="min-w-0 space-y-1.5 pb-0.5">
-              <h1
-                className="text-lg font-bold text-gray-900 leading-snug break-words line-clamp-2"
-                title={user?.schoolName || ''}
-              >
-                {user?.schoolName}
-              </h1>
-              <p className="text-xs text-gray-500">Student Management</p>
+              <div className="flex items-start gap-2 sm:gap-3">
+                <BrandLogo linkTo="/dashboard" className="max-w-[9.5rem] sm:max-w-none" />
+                <div className="min-w-0">
+                  <h1
+                    className="text-lg font-bold text-gray-900 leading-snug break-words line-clamp-2"
+                    title={user?.schoolName || ''}
+                  >
+                    {user?.schoolName}
+                  </h1>
+                  <p className="text-xs text-gray-500">Student Management</p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* sm+: single horizontal bar */}
           <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div className="flex min-w-0 flex-1 items-center gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+              <BrandLogo linkTo="/dashboard" className="shrink-0" />
               <Link
                 to="/dashboard"
                 className="shrink-0 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"

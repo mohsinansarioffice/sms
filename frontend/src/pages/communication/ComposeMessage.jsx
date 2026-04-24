@@ -5,12 +5,14 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const ComposeMessage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isParent = user?.role === 'parent';
   const isStudent = user?.role === 'student';
+  const homePath = isParent ? '/parent/dashboard' : isStudent ? '/student/dashboard' : '/dashboard';
   const messagesHome = '/messages';
   const [searchParams] = useSearchParams();
   const presetTo = searchParams.get('to');
@@ -65,13 +67,16 @@ const ComposeMessage = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <button
-            type="button"
-            onClick={() => navigate(messagesHome)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <BrandLogo linkTo={homePath} />
+            <button
+              type="button"
+              onClick={() => navigate(messagesHome)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
         </div>
       </nav>
 

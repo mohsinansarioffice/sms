@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
 import { PriorityBadge, AudienceLabel } from './priorityBadges';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const AnnouncementDetail = () => {
   const { id } = useParams();
@@ -69,6 +70,13 @@ const AnnouncementDetail = () => {
     setShowReaders(true);
   };
 
+  const homePath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
+
   const a = currentAnnouncement;
   const creatorId = a?.createdBy?._id || a?.createdBy;
   const canEdit =
@@ -98,13 +106,16 @@ const AnnouncementDetail = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/announcements')}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={homePath} />
+            <button
+              type="button"
+              onClick={() => navigate('/announcements')}
+              className="btn-secondary flex items-center gap-2 shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
           {canEdit && (
             <div className="flex gap-2">
               <Link to={`/announcements/${id}/edit`} className="btn-secondary flex items-center gap-2">

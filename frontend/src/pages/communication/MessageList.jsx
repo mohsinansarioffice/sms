@@ -4,11 +4,17 @@ import { Mail, Inbox, Send, ArrowLeft, Plus, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const MessageList = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const dashboardPath = user?.role === 'parent' ? '/parent/dashboard' : '/dashboard';
+  const dashboardPath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
   const {
     messages,
     total,
@@ -47,8 +53,9 @@ const MessageList = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate(dashboardPath)} className="btn-secondary flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={dashboardPath} />
+            <button type="button" onClick={() => navigate(dashboardPath)} className="btn-secondary flex items-center gap-2 shrink-0">
               <ArrowLeft className="w-4 h-4" /> Dashboard
             </button>
             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">

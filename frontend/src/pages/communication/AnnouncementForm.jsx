@@ -5,11 +5,20 @@ import { ArrowLeft, Loader2, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAcademicStore from '../../store/academicStore';
+import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const AnnouncementForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const homePath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
   const isEdit = Boolean(id) && location.pathname.includes('/edit');
 
   const { classes, fetchClasses } = useAcademicStore();
@@ -159,13 +168,16 @@ const AnnouncementForm = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <BrandLogo linkTo={homePath} />
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
         </div>
       </nav>
 

@@ -40,6 +40,7 @@ import {
   daysUntilDueDate,
   billingReminderTone,
 } from "../lib/billingReminder";
+import BrandLogo from "../components/common/BrandLogo";
 
 /** When usage is still loading, features are treated as enabled to avoid flicker. */
 function usePlanFeatures(usage) {
@@ -406,8 +407,10 @@ const Dashboard = () => {
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="min-w-0 flex-1 flex items-start gap-3 sm:gap-4">
+              <BrandLogo linkTo="/dashboard" className="mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h1
                   className="text-lg sm:text-xl font-bold text-gray-900 min-w-0 truncate"
                   title={user?.schoolName || ""}
@@ -434,15 +437,16 @@ const Dashboard = () => {
                     {planDisplayName}
                   </span>
                 )}
+                </div>
+                <p
+                  className="text-sm text-gray-600 truncate mt-0.5"
+                  title={
+                    user?.name ? `Welcome back, ${user.name}` : undefined
+                  }
+                >
+                  Welcome back, {user?.name}
+                </p>
               </div>
-              <p
-                className="text-sm text-gray-600 truncate mt-0.5"
-                title={
-                  user?.name ? `Welcome back, ${user.name}` : undefined
-                }
-              >
-                Welcome back, {user?.name}
-              </p>
             </div>
 
             <div className="hidden lg:flex flex-shrink-0 flex-wrap items-center justify-end gap-2 xl:gap-3">

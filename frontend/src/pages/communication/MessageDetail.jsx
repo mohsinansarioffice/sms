@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useCommunicationStore from '../../store/communicationStore';
 import useAuthStore from '../../store/authStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const MessageDetail = () => {
   const { id } = useParams();
@@ -38,6 +39,13 @@ const MessageDetail = () => {
     } else toast.error(res.error || 'Failed');
   };
 
+  const homePath =
+    user?.role === 'parent'
+      ? '/parent/dashboard'
+      : user?.role === 'student'
+        ? '/student/dashboard'
+        : '/dashboard';
+
   const m = currentMessage;
   const uid = user?.id || user?._id;
   const senderId = m?.senderId?._id || m?.senderId;
@@ -66,14 +74,17 @@ const MessageDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
-          <button
-            type="button"
-            onClick={() => navigate('/messages')}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+        <div className="max-w-3xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={homePath} />
+            <button
+              type="button"
+              onClick={() => navigate('/messages')}
+              className="btn-secondary flex items-center gap-2 shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
           <button
             type="button"
             onClick={handleDelete}

@@ -10,6 +10,7 @@ import useDiaryStore from '../../store/diaryStore';
 import useAuthStore from '../../store/authStore';
 import useAcademicStore from '../../store/academicStore';
 import useParentStore from '../../store/parentStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const PARENT_STUDENT_STORAGE_KEY = 'parentPortal.selectedStudentId';
 
@@ -151,11 +152,12 @@ const DiaryView = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo={isParent ? '/parent/dashboard' : '/dashboard'} />
             <button
               type="button"
               onClick={() => navigate(isParent ? '/parent/dashboard' : '/dashboard')}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center gap-2 shrink-0"
             >
               <ArrowLeft className="w-4 h-4" />
               {isParent ? 'Portal' : 'Dashboard'}

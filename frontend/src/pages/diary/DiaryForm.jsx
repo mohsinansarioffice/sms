@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import useDiaryStore from '../../store/diaryStore';
 import useAcademicStore from '../../store/academicStore';
+import BrandLogo from '../../components/common/BrandLogo';
 
 const DiaryForm = () => {
   const navigate = useNavigate();
@@ -118,8 +119,9 @@ const DiaryForm = () => {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate('/diary')} className="btn-secondary flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <BrandLogo linkTo="/dashboard" />
+            <button type="button" onClick={() => navigate('/diary')} className="btn-secondary flex items-center gap-2 shrink-0">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
