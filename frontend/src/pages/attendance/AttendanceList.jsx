@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import useAttendanceStore from '../../store/attendanceStore';
 import useAuthStore from '../../store/authStore';
+import useAcademicStore from '../../store/academicStore';
 import DataTable from '../../components/common/DataTable';
 import AppHeader, {
   AppPageHeaderContext,
@@ -22,10 +23,35 @@ const AttendanceList = () => {
     error
   } = useAttendanceStore();
 
+  const { classes: academicClasses, sections: academicSections, fetchClasses, fetchSections } =
+    useAcademicStore();
+
   const [dateQuery, setDateQuery] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [classFilter, setClassFilter] = useState('');
-  
-  const classes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+
+  const classes = useMemo(
+    () => (academicClasses.length
+      ? academicClasses.map((c) => c.name).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']),
+    [academicClasses]
+  );
+
+  const classNameById = useMemo(() => {
+    const m = new Map();
+    academicClasses.forEach((c) => m.set(String(c._id), c.name));
+    return m;
+  }, [academicClasses]);
+
+  const sectionNameById = useMemo(() => {
+    const m = new Map();
+    (academicSections || []).forEach((s) => m.set(String(s._id), s.name));
+    return m;
+  }, [academicSections]);
+
+  useEffect(() => {
+    fetchClasses();
+    fetchSections();
+  }, [fetchClasses, fetchSections]);
 
   useEffect(() => {
     fetchAttendance({ date: dateQuery, class: classFilter });
@@ -54,11 +80,20 @@ const AttendanceList = () => {
       header: 'Class/Section',
       cell: info => {
         const record = info.getValue();
+        const classLabel =
+          (record.class && String(record.class).trim()) ||
+          (record.classId && classNameById.get(String(record.classId))) ||
+          '—';
+        const sectionLabel =
+          (record.section && String(record.section).trim()) ||
+          (record.sectionId && sectionNameById.get(String(record.sectionId))) ||
+          '';
         return (
           <div className="font-semibold text-gray-900">
-            Class {record.class} {record.section ? `- ${record.section}` : ''}
+            Class {classLabel}
+            {sectionLabel ? ` — ${sectionLabel}` : ''}
           </div>
-        )
+        );
       }
     }),
     columnHelper.accessor(row => getStats(row.records).total, {
@@ -122,7 +157,7 @@ const AttendanceList = () => {
         )
       }
     })
-  ], [dateQuery]);
+  ], [dateQuery, classNameById, sectionNameById]);
 
   return (
     <div className="min-h-screen bg-gray-50">

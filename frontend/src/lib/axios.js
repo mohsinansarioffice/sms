@@ -1,11 +1,11 @@
-import axios from 'axios';
-import { getAccessToken } from './sessionTokens';
-import { refreshSessionTokens, clearAllAuth } from './authRefresh';
+import axios from "axios";
+import { getAccessToken } from "./sessionTokens";
+import { refreshSessionTokens, clearAllAuth } from "./authRefresh";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -16,12 +16,12 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - unwrap body, refresh on 401
@@ -35,12 +35,12 @@ axiosInstance.interceptors.response.use(
     const message =
       raw ||
       (error.response
-        ? 'Something went wrong. Please try again later.'
-        : 'Unable to reach the server. Check your connection and try again.');
+        ? "Something went wrong. Please try again later."
+        : "Unable to reach the server. Check your connection and try again.");
 
     if (status === 401 && originalRequest && !originalRequest._retry) {
-      const url = String(originalRequest.url || '');
-      if (url.includes('/auth/refresh') || url.includes('/auth/login')) {
+      const url = String(originalRequest.url || "");
+      if (url.includes("/auth/refresh") || url.includes("/auth/login")) {
         await clearAllAuth();
         const err = new Error(message);
         err.response = error.response;
@@ -67,7 +67,7 @@ axiosInstance.interceptors.response.use(
     const err = new Error(message);
     err.response = error.response;
     return Promise.reject(err);
-  }
+  },
 );
 
 export default axiosInstance;

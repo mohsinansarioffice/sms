@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import axios from '../lib/axios';
+import { create } from "zustand";
+import axios from "../lib/axios";
 
 const useExamStore = create((set, get) => ({
   examTypes: [],
@@ -12,14 +12,15 @@ const useExamStore = create((set, get) => ({
   error: null,
 
   // ============ EXAM TYPES ============
-  
+
   fetchExamTypes: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get('/exams/types');
+      const response = await axios.get("/exams/types");
       set({
-        examTypes: response.data.data?.examTypes || response.data.examTypes || [],
-        isLoading: false
+        examTypes:
+          response.data.data?.examTypes || response.data.examTypes || [],
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -29,7 +30,7 @@ const useExamStore = create((set, get) => ({
   createExamType: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/exams/types', data);
+      const response = await axios.post("/exams/types", data);
       set({ isLoading: false });
       get().fetchExamTypes();
       return { success: true, data: response.data };
@@ -66,18 +67,18 @@ const useExamStore = create((set, get) => ({
   },
 
   // ============ EXAMS ============
-  
+
   fetchExams: async (filters = {}) => {
     set({ isLoading: true, error: null });
     try {
       const params = new URLSearchParams();
-      Object.keys(filters).forEach(key => {
+      Object.keys(filters).forEach((key) => {
         if (filters[key]) params.append(key, filters[key]);
       });
       const response = await axios.get(`/exams?${params.toString()}`);
       set({
         exams: response.data.data?.exams || response.data.exams || [],
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -90,7 +91,7 @@ const useExamStore = create((set, get) => ({
       const response = await axios.get(`/exams/${id}`);
       set({
         currentExam: response.data.data?.exam || response.data.exam,
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -100,7 +101,7 @@ const useExamStore = create((set, get) => ({
   createExam: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/exams', data);
+      const response = await axios.post("/exams", data);
       set({ isLoading: false });
       get().fetchExams();
       return { success: true, data: response.data };
@@ -137,27 +138,35 @@ const useExamStore = create((set, get) => ({
   },
 
   // ============ RESULTS ============
-  
-  fetchExamResults: async (examId) => {
-    set({ isLoading: true, error: null });
+
+  fetchExamResults: async (examId, { silent = false } = {}) => {
+    if (!silent) set({ isLoading: true, error: null });
+    else set({ error: null });
     try {
       const response = await axios.get(`/exams/${examId}/results`);
       set({
         examResults: response.data.data?.results || response.data.results || [],
         currentExam: response.data.data?.exam || response.data.exam,
-        isLoading: false
+        ...(!silent && { isLoading: false }),
       });
+      return { success: true };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({
+        error: error.message,
+        ...(!silent && { isLoading: false }),
+      });
+      return { success: false, error: error.message };
     }
   },
 
   enterMarks: async (examId, results) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`/exams/${examId}/results`, { results });
+      const response = await axios.post(`/exams/${examId}/results`, {
+        results,
+      });
       set({ isLoading: false });
-      get().fetchExamResults(examId);
+      await get().fetchExamResults(examId, { silent: true });
       return { success: true, data: response.data };
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -171,7 +180,7 @@ const useExamStore = create((set, get) => ({
       const response = await axios.get(`/exams/student/${studentId}/results`);
       set({
         studentResults: response.data.data || response.data,
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -181,7 +190,9 @@ const useExamStore = create((set, get) => ({
   publishResults: async (examId, isPublished) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.put(`/exams/${examId}/publish`, { isPublished });
+      const response = await axios.put(`/exams/${examId}/publish`, {
+        isPublished,
+      });
       set({ isLoading: false });
       return { success: true, data: response.data };
     } catch (error) {
@@ -196,7 +207,7 @@ const useExamStore = create((set, get) => ({
       const response = await axios.get(`/exams/${examId}/analytics`);
       set({
         examAnalytics: response.data.data || response.data,
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -205,14 +216,15 @@ const useExamStore = create((set, get) => ({
 
   clearError: () => set({ error: null }),
 
-  reset: () => set({
-    examTypes: [],
-    exams: [],
-    currentExam: null,
-    examResults: [],
-    studentResults: null,
-    examAnalytics: null
-  })
+  reset: () =>
+    set({
+      examTypes: [],
+      exams: [],
+      currentExam: null,
+      examResults: [],
+      studentResults: null,
+      examAnalytics: null,
+    }),
 }));
 
 export default useExamStore;

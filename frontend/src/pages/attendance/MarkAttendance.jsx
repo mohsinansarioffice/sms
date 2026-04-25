@@ -199,6 +199,15 @@ const MarkAttendance = () => {
     }
   };
 
+  const selectedClassName = useMemo(
+    () => academicClasses.find((c) => c._id === selectedClass)?.name,
+    [academicClasses, selectedClass]
+  );
+  const selectedSectionName = useMemo(
+    () => academicSections.find((s) => s._id === selectedSection)?.name,
+    [academicSections, selectedSection]
+  );
+
   const enrichedStudents = useMemo(() => {
     return students.map(student => ({
       ...student,
@@ -347,12 +356,22 @@ const MarkAttendance = () => {
               </select>
             </div>
             
-            <button 
+            <button
+              type="button"
               onClick={loadStudents}
-              disabled={!selectedClass}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={!selectedClass || isStudentsLoading}
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <Users className="w-4 h-4" /> Load Students
+              {isStudentsLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading students...
+                </>
+              ) : (
+                <>
+                  <Users className="w-4 h-4" /> Load Students
+                </>
+              )}
             </button>
           </div>
 
@@ -367,13 +386,15 @@ const MarkAttendance = () => {
           )}
         </div>
 
-        {/* Student List */}
-        {studentsLoaded && (
+        {/* Student List (show while loading so spinner is visible) */}
+        {(studentsLoaded || isStudentsLoading) && (
           <div className="card p-0 overflow-hidden border-t-0 shadow-md">
             <div className="bg-gray-50 border-b px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h3 className="font-semibold text-gray-900">
-                  Class {selectedClass}{selectedSection ? `-${selectedSection}` : ''} 
+                  {selectedClassName
+                    ? `Class ${selectedClassName}${selectedSectionName ? ` — ${selectedSectionName}` : ''}`
+                    : 'Class'}
                   <span className="text-gray-500 font-normal ml-2">({students.length} students)</span>
                 </h3>
                 {existingRecord && (
